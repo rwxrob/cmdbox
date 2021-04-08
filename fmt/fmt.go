@@ -7,43 +7,66 @@ import (
 	"unicode"
 )
 
-// Emph takes a command documentation format string (an extremely limited
-// version of Markdown that is also Godoc friendly) and transforms it as
-// follows:
+// not const because can be overriden by env vars
+var reset = "\033[0m"
+var italic = "\033[3m"
+var bold = "\033[1m"
+var bolditalic = "\033[1m\033[3m"
+
+func init() {
+	us := os.Getenv("LESS_TERMCAP_us")
+	md := os.Getenv("LESS_TERMCAP_md")
+	mb := os.Getenv("LESS_TERMCAP_mb")
+	if us != "" {
+		italic = us
+	}
+	if md != "" {
+		bold = md
+	}
+	if mb != "" {
+		bolditalic = mb
+	}
+}
+
+// Emph takes a command documentation format string (an extremely
+// limited version of Markdown that is also Godoc friendly) and
+// transforms it as follows:
 //
 // * Initial and trailing blank lines are removed.
 //
-// * Indentation is removed - the number of spaces preceeding the first word of
-//   the first line are ignored in every line (including raw text blocks).
+// * Indentation is removed - the number of spaces preceeding the first
+//   word of the first line are ignored in every line (including raw text
+//   blocks).
 //
-// * Raw text ignored - any line beginning with four or more spaces (after
-//   convenience indentation is removed) will be kept as it is exactly (code
-//   examples, etc.) but should never exceed 80 characters (including the
-//   spaces).
+// * Raw text ignored - any line beginning with four or more spaces
+//   (after convenience indentation is removed) will be kept as it is
+//   exactly (code examples, etc.) but should never exceed 80 characters
+//   (including the spaces).
 //
-// * Blocks are unwrapped - any non-blank (without three or less initial spaces)
-//   will be trimmed line following a line will be joined to the preceding line
-//   recursively (unless hard break).
+// * Blocks are unwrapped - any non-blank (without three or less initial
+//   spaces) will be trimmed line following a line will be joined to the
+//   preceding line recursively (unless hard break).
 //
-// * Hard breaks kept - like Markdown any line that ends with two or more
-//   spaces will automatically force a line return.
+// * Hard breaks kept - like Markdown any line that ends with two or
+//   more spaces will automatically force a line return.
 //
-// * URL links argument names and anything else within angle brackets (<url>),
-//   will trigger italics in both text blocks and usage sections.
+// * URL links argument names and anything else within angle brackets
+//   (<url>), will trigger italics in both text blocks and usage sections.
 //
-// * Italic, Bold, and BoldItalic inline emphasis using one, two, or three
-//   stars respectivly will be observed and cannot be intermixed or intraword.
-//   Each opener must be preceded by a UNICODE space (or nothing) and followed by
-//   a non-space rune. Each closer must be preceded by a non-space rune and
-//   followed by a UNICODE space (or nothing).
+// * Italic, Bold, and BoldItalic inline emphasis using one, two, or
+//   three stars respectivly will be observed and cannot be intermixed or
+//   intraword.  Each opener must be preceded by a UNICODE space (or
+//   nothing) and followed by a non-space rune. Each closer must be
+//   preceded by a non-space rune and followed by a UNICODE space (or
+//   nothing).
 //
 // For historic reasons the following environment variables will be
-// observed if found (and also provide color support for the less
-// pager utility):
+// observed if found (and also provide color support for the less pager
+// utility):
 //
-// * italic - LESS_TERMCAP_so
-// * bold - LESS_TERMCAP_md
-// * bolditalic = LESS_TERMCAP_mb
+//   * italic      LESS_TERMCAP_so
+//   * bold        LESS_TERMCAP_md
+//   * bolditalic  LESS_TERMCAP_mb
 //
 func Emph(input string, indent, width int) (output string) {
 
@@ -145,14 +168,14 @@ func Emph(input string, indent, width int) (output string) {
 	return
 }
 
+// Emphasize replaces minimal Markdown-like syntax with *italic*,
+// **bold**, and ***bolditalic***
 func Emphasize(buf string) string {
 
-	// keep for debugging
 	// italic = `<italic>`
 	// bold = `<bold>`
 	// bolditalic = `<bolditalic>`
 	// reset = `<reset>`
-	// underline = `<ul>`
 
 	nbuf := []rune{}
 	prev := ' '
@@ -164,9 +187,7 @@ func Emphasize(buf string) string {
 		r := []rune(buf)[i]
 
 		if r == '<' {
-			// TODO detect underline support
 			//nbuf = append(nbuf, '<')
-			nbuf = append(nbuf, []rune(underline)...)
 			for {
 				i++
 				r = unicode.ToUpper(rune(buf[i]))
@@ -329,26 +350,4 @@ func Wrap(buf string, width int) string {
 		curwidth++
 	}
 	return nbuf
-}
-
-var reset = "\033[0m"
-var italic = reset + "\033[3m"
-var bold = reset + "\033[1m"
-var bolditalic = reset + "\033[1m\033[3m"
-var underline = reset + "\033[4m"
-
-func init() {
-	//us := os.Getenv("LESS_TERMCAP_us")
-	us := os.Getenv("LESS_TERMCAP_us")
-	md := os.Getenv("LESS_TERMCAP_md")
-	mb := os.Getenv("LESS_TERMCAP_mb")
-	if us != "" {
-		italic = reset + us
-	}
-	if md != "" {
-		bold = reset + md
-	}
-	if mb != "" {
-		bolditalic = reset + mb
-	}
 }
