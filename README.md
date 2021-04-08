@@ -459,16 +459,21 @@ opportunity to allow the judicious use of color and local pager
 applications when detected. Cobra applications therefore render
 difficult to read, unformatted help documentation.
 
+## Terminology
+
+* **tool** - a CmdBox command
+
+## Conventions
+
+By convention CmdBox commands are called *tools* (as in that would go
+into a *tool box*) and are always prefixed with `cmdbox-` for easy
+discovery on GitHub, etc.
+
 ## Real World Examples
 
 * <https://github.com/rwxrob/kn>
 * <https://github.com/rwxrob/cmdbox-pomo>
 * <https://github.com/rwxrob/cmdbox-config>
-* <https://github.com/rwxrob/cmdbox-snip>
-* <https://github.com/rwxrob/cmdbox-timer>
-* <https://github.com/rwxrob/cmdbox-zet>
 * <https://github.com/rwxrob/cmdbox-twitch>
-* <https://github.com/rwxrob/cmdbox-ageof>
-* <https://github.com/rwxrob/cmdbox-learn>
 * <https://github.com/rwxrob/auth-go/cmd/auth>
 
