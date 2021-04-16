@@ -44,6 +44,9 @@ type Command struct {
 // that the subcommands are *not* added to the internal Command Index.
 // They are saved as a list within the Command as Subcommands.
 func New(name string, subcmds ...string) *Command {
+	if name == "" {
+		return nil
+	}
 	c := new(Command)
 	c.Name = name
 	c.Other = map[string]util.Stringer{}
@@ -81,10 +84,14 @@ func (c *Command) vsubcommands() []*Command {
 func (c *Command) SprintUsage() string {
 	buf := ""
 	if c.Usage != nil {
-		buf += "**" + c.Name + "** " + strings.TrimSpace(util.String(c.Usage)) + "\n"
+		buf += "**" + c.Name + "**"
+		if c.Usage != "" {
+			buf += " " + strings.TrimSpace(util.String(c.Usage))
+		}
+		buf += "\n"
 	}
 	for _, subcmd := range c.vsubcommands() {
-		buf += "**" + c.Name + "** " + subcmd.SprintUsage()
+		buf += "**" + c.Name + "** " + subcmd.SprintUsage() + "\n"
 	}
 	if len(buf) > 0 {
 		return buf
@@ -233,10 +240,10 @@ func (c *Command) Add(names ...string) {
 			for _, n := range strings.Split(name, "|") {
 				c.Add(n)
 			}
-			return
-		}
-		if !c.Has(name) {
-			c.subcommands = append(c.subcommands, name)
+		} else {
+			if !c.Has(name) {
+				c.subcommands = append(c.subcommands, name)
+			}
 		}
 	}
 }
