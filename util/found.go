@@ -1,6 +1,8 @@
 package util
 
-import "os"
+import (
+	"os"
+)
 
 // Found returns true if the given path was absolutely found to exist on
 // the system. A false return value means either the file does not
@@ -11,6 +13,8 @@ import "os"
 // so avoid this usage for pseudo-semaphore designs and depend on file
 // locks.
 func Found(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
