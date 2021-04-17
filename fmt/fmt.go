@@ -141,9 +141,9 @@ func Sscanln(str interface{}, a ...interface{}) (n int, err error) {
 
 // ------------------ end fmt compatibility functions -----------------
 
-// SmartPrintln calls Println() or Print() based on if IsTerminal()
+// PrintSmartln calls Println() or Print() based on if IsTerminal()
 // returns true or not.
-func SmartPrintln(a ...interface{}) {
+func PrintSmartln(a ...interface{}) {
 	if term.IsTerminal() {
 		Println(a...)
 		return

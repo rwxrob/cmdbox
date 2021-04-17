@@ -3,6 +3,7 @@ package fmt
 import (
 	"bytes"
 	_fmt "fmt"
+	"os"
 	"strings"
 	"testing"
 )
@@ -105,6 +106,32 @@ func ExamplePrint() {
 	b := true
 	s := "doh"
 	fl := 2.4
+	_fmt.Print(i, "\n")
+	Print(i, "\n")
+	_fmt.Print(b, "\n")
+	Print(b, "\n")
+	_fmt.Print(s, "\n")
+	Print(s, "\n")
+	_fmt.Print(fl, "\n")
+	Print(fl, "\n")
+	Print(fdoh, "\n")
+	// Output:
+	// 42
+	// 42
+	// true
+	// true
+	// doh
+	// doh
+	// 2.4
+	// 2.4
+	// doh
+}
+
+func ExamplePrintln() {
+	i := 42
+	b := true
+	s := "doh"
+	fl := 2.4
 	_fmt.Println(i)
 	Println(i)
 	_fmt.Println(b)
@@ -140,28 +167,68 @@ func ExamplePrintf() {
 	// 42truedoh2.4doh
 }
 
-func ExamplePrintln() {
-	i := 42
-	b := true
-	s := "doh"
-	fl := 2.4
-	_fmt.Println(i, b, s, fl)
-	Println(i, b, s, fl, fdoh)
-	// Output:
-	// 42 true doh 2.4
-	// 42 true doh 2.4 doh
-}
-
 func TestScan(t *testing.T) {
-	t.Skip("simple delegation")
+	f, err := os.CreateTemp("", "")
+	if err != nil {
+		t.Error(err)
+	}
+	_fmt.Fprint(f, "5 true gophers")
+	f.Seek(0, 0)
+	orig := os.Stdin
+	defer func() { os.Stdin = orig }()
+	os.Stdin = f
+	var i int
+	var b bool
+	var s string
+	Scan(&i, &b, &s)
+	t.Logf("%v %v %v\n", i, b, s)
+	if i != 5 || !b || s != "gophers" {
+		t.Fail()
+	}
 }
 
 func TestScanf(t *testing.T) {
-	t.Skip("simple delegation with minimal String(format)")
+	f, err := os.CreateTemp("", "")
+	if err != nil {
+		t.Error(err)
+	}
+	_fmt.Fprint(f, "5 true gophers")
+	f.Seek(0, 0)
+	orig := os.Stdin
+	defer func() { os.Stdin = orig }()
+	os.Stdin = f
+	var i int
+	var b bool
+	var s string
+	Scanf("%d %t %s", &i, &b, &s)
+	if i != 5 || !b || s != "gophers" {
+		t.Fail()
+	}
+	f.Seek(0, 0)
+	Scanf(func() string { return "%d %t %s" }, &i, &b, &s)
+	if i != 5 || !b || s != "gophers" {
+		t.Fail()
+	}
 }
 
 func TestScanln(t *testing.T) {
-	t.Skip("simple delegation")
+	f, err := os.CreateTemp("", "")
+	if err != nil {
+		t.Error(err)
+	}
+	_fmt.Fprint(f, "5 true gophers\n")
+	f.Seek(0, 0)
+	orig := os.Stdin
+	defer func() { os.Stdin = orig }()
+	os.Stdin = f
+	var i int
+	var b bool
+	var s string
+	Scanln(&i, &b, &s)
+	t.Logf("%v %v %v\n", i, b, s)
+	if i != 5 || !b || s != "gophers" {
+		t.Fail()
+	}
 }
 
 func TestSprint(t *testing.T) {
@@ -262,11 +329,11 @@ func TestSscanln(t *testing.T) {
 	var i int
 	var b bool
 	var s string
-	Sscan(buf, &i, &b, &s)
+	Sscanln(buf, &i, &b, &s)
 	if i != 5 || !b || s != "gophers" {
 		t.Fail()
 	}
-	Sscan(func() string { return "5 true gophers" }, &i, &b, &s)
+	Sscanln(func() string { return "5 true gophers" }, &i, &b, &s)
 	if i != 5 || !b || s != "gophers" {
 		t.Fail()
 	}
