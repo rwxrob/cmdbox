@@ -8,7 +8,6 @@ import (
 	"github.com/rwxrob/cmdbox/fmt"
 	"github.com/rwxrob/cmdbox/term"
 	"github.com/rwxrob/cmdbox/term/esc"
-	"github.com/rwxrob/cmdbox/util"
 )
 
 // WARNING: The use of the internal commands directly is because of the
@@ -145,7 +144,7 @@ func init() {
 	_versions.Summary = `list names and versions`
 	_versions.Method = func(args []string) error {
 		for _, name := range names() {
-			fmt.Print("%-14v %v\n", name, strings.TrimSpace(util.String(commands[name].Version)))
+			fmt.Print("%-14v %v\n", name, strings.TrimSpace(fmt.String(commands[name].Version)))
 		}
 		return nil
 	}
@@ -157,7 +156,7 @@ func init() {
 	_copyrights.Summary = `list names and copyrights`
 	_copyrights.Method = func(ignored []string) error {
 		for _, name := range names() {
-			fmt.Print("%-14v %v\n", name, strings.TrimSpace(string(util.String(commands[name].Copyright))))
+			fmt.Print("%-14v %v\n", name, strings.TrimSpace(string(fmt.String(commands[name].Copyright))))
 		}
 		return nil
 	}
@@ -169,7 +168,7 @@ func init() {
 	_licenses.Summary = `list names and licenses`
 	_licenses.Method = func(ignored []string) error {
 		for _, name := range names() {
-			fmt.Print("%-14v %v\n", name, strings.TrimSpace(util.String(commands[name].License)))
+			fmt.Print("%-14v %v\n", name, strings.TrimSpace(fmt.String(commands[name].License)))
 		}
 		return nil
 	}
@@ -185,7 +184,7 @@ func init() {
 			if author == nil {
 				author = ""
 			}
-			fmt.Print("%-14v %v\n", name, strings.TrimSpace(util.String(author)))
+			fmt.Print("%-14v %v\n", name, strings.TrimSpace(fmt.String(author)))
 		}
 		return nil
 	}
@@ -197,7 +196,7 @@ func init() {
 	_gits.Summary = `list names and git source repos`
 	_gits.Method = func(ignored []string) error {
 		for _, name := range names() {
-			fmt.Print("%-14v %v\n", name, strings.TrimSpace(util.String(commands[name].Git)))
+			fmt.Print("%-14v %v\n", name, strings.TrimSpace(fmt.String(commands[name].Git)))
 		}
 		return nil
 	}
@@ -209,7 +208,7 @@ func init() {
 	_issues.Summary = `list names and issue reporting URLs`
 	_issues.Method = func(ignored []string) error {
 		for _, name := range names() {
-			fmt.Print("%-14v %v\n", name, strings.TrimSpace(util.String(commands[name].Issues)))
+			fmt.Print("%-14v %v\n", name, strings.TrimSpace(fmt.String(commands[name].Issues)))
 		}
 		return nil
 	}
@@ -221,7 +220,7 @@ func init() {
 	_usages.Summary = `list names and usages`
 	_usages.Method = func(ignored []string) error {
 		for _, name := range names() {
-			fmt.Print("%-14v %v\n", name, strings.TrimSpace(util.String(commands[name].Usage)))
+			fmt.Print("%-14v %v\n", name, strings.TrimSpace(fmt.String(commands[name].Usage)))
 		}
 		return nil
 	}
@@ -234,7 +233,7 @@ func init() {
 	_desc.Method = func(ignored []string) error {
 		for _, name := range names() {
 			fmt.Print("DESCRIPTION %v\n\n", name)
-			fmt.Println(fmt.Plain(util.String(commands[name].Description), 4, int(term.WinSize.Col)))
+			fmt.Println(fmt.Plain(fmt.String(commands[name].Description), 4, int(term.WinSize.Col)))
 			fmt.Println()
 		}
 		return nil
@@ -248,7 +247,7 @@ func init() {
 	_examples.Method = func(ignored []string) error {
 		for _, name := range names() {
 			fmt.Print("EXAMPLE %v\n\n", name)
-			fmt.Print(fmt.Sprint(fmt.Plain(util.String(commands[name].Examples), 4, int(term.WinSize.Col))))
+			fmt.Print(fmt.Sprint(fmt.Plain(fmt.String(commands[name].Examples), 4, int(term.WinSize.Col))))
 			fmt.Print("\n\n")
 		}
 		return nil
@@ -274,27 +273,36 @@ func init() {
 		if len(args) > 0 && Has(args[0]) {
 			c = commands[args[0]]
 		}
-		output := fmt.Sprint(esc.ClearScreen + fmt.TopTitle(
-			esc.B+c.Name, esc.X+"DOCUMENTATION", esc.B+c.Name,
-			int(term.WinSize.Col)) + "\n\n" +
-			esc.B + "NAME" + esc.X + "\n" +
-			fmt.Emph(c.Title(), 4, int(term.WinSize.Col)) + "\n\n" +
-			esc.B + "USAGE" + esc.X + "\n" +
-			fmt.Indent(fmt.Emphasize(c.SprintUsage()), 4) + "\n\n")
-		if len(c.vsubcommands()) > 0 {
-			output += esc.B + "COMMANDS" + esc.X + "\n" +
-				fmt.Indent(fmt.Emphasize(c.SprintCommandSummaries()), 4) + "\n\n"
-		}
-		output += esc.B + "DESCRIPTION" + esc.X + "\n" +
-			fmt.Emph(util.String(c.Description), 4, int(term.WinSize.Col)) + "\n\n"
-
-		// TODO finish output
-		if fmt.PagedOut {
-			fmt.PrintPaged(output, "")
-		} else {
-			fmt.Print(output)
-		}
+		output := fmt.Sprint(
+			fmt.TopTitle(
+				esc.B+c.Name, esc.X+"DOCUMENTATION", esc.B+c.Name,
+				int(term.WinSize.Col),
+			)+"\n\n",
+			esc.B+"NAME"+esc.X+"\n",
+		)
+		fmt.Println(output)
 		return nil
+
+		/*
+				esc.B + "NAME" + esc.X + "\n" +
+				fmt.Emph(c.Title(), 4, int(term.WinSize.Col)) + "\n\n" +
+				esc.B + "USAGE" + esc.X + "\n" +
+				fmt.Indent(fmt.Emphasize(c.SprintUsage()), 4) + "\n\n")
+			if len(c.vsubcommands()) > 0 {
+				output += esc.B + "COMMANDS" + esc.X + "\n" +
+					fmt.Indent(fmt.Emphasize(c.SprintCommandSummaries()), 4) + "\n\n"
+			}
+			output += esc.B + "DESCRIPTION" + esc.X + "\n" +
+				fmt.Emph(fmt.String(c.Description), 4, int(term.WinSize.Col)) + "\n\n"
+
+			// TODO finish output
+			if fmt.PagedOut {
+				fmt.PrintPaged(output, "")
+			} else {
+				fmt.Print(output)
+			}
+			return nil
+		*/
 	}
 	builtins = append(builtins, "help")
 

@@ -11,4 +11,6 @@ const (
 	I           = "\033[3m"
 	BoldItalic  = "\033[1m\033[3m"
 	BI          = "\033[1m\033[3m"
+	Underline   = "\033[4m"
+	U           = "\033[4m"
 )

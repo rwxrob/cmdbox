@@ -18,6 +18,7 @@ var reset = esc.Reset
 var italic = esc.Italic
 var bold = esc.Bold
 var bolditalic = esc.BoldItalic
+var underline = esc.Underline
 
 func init() {
 	var x string
@@ -33,17 +34,10 @@ func init() {
 	if x != "" {
 		bolditalic = x
 	}
-}
-
-func peekWord(buf []rune, start int) []rune {
-	word := []rune{}
-	for _, r := range buf[start:] {
-		if unicode.IsSpace(r) {
-			break
-		}
-		word = append(word, r)
+	x = os.Getenv("LESS_TERMCAP_us")
+	if x != "" {
+		underline = x
 	}
-	return word
 }
 
 // Emph takes a command documentation format string (an extremely
@@ -69,7 +63,8 @@ func peekWord(buf []rune, start int) []rune {
 //   more spaces will automatically force a line return.
 //
 // * URL links argument names and anything else within angle brackets
-//   (<url>), will trigger italics in both text blocks and usage sections.
+//   (<url>), will trigger uppercase with underline in both text blocks
+//   and usage sections.
 //
 // * Italic, Bold, and BoldItalic inline emphasis using one, two, or
 //   three stars respectivly will be observed and cannot be intermixed or
@@ -85,6 +80,7 @@ func peekWord(buf []rune, start int) []rune {
 //   * Italic      LESS_TERMCAP_so
 //   * Bold        LESS_TERMCAP_md
 //   * BoldItalic  LESS_TERMCAP_mb
+//   * Underline   LESS_TERMCAP_us
 //
 func Emph(input string, indent, width int) (output string) {
 
@@ -187,7 +183,7 @@ func Emph(input string, indent, width int) (output string) {
 }
 
 // Emphasize replaces minimal Markdown-like syntax with *Italic*,
-// **Bold**, and ***BoldItalic***
+// **Bold**, ***BoldItalic***, and <UNDERLINED_UPPER>
 func Emphasize(buf string) string {
 
 	// italic = `<italic>`
@@ -206,6 +202,7 @@ func Emphasize(buf string) string {
 
 		if r == '<' {
 			//nbuf = append(nbuf, '<')
+			nbuf = append(nbuf, []rune(underline)...)
 			for {
 				i++
 				r = unicode.ToUpper(rune(buf[i]))
@@ -297,4 +294,105 @@ func Indent(buf string, spaces int) string {
 		nbuf += scanner.Text()
 	}
 	return nbuf
+}
+
+// Plain is the same as Format but without any Emphasis.
+func Plain(input string, indent, width int) (output string) {
+
+	// this scanner could be waaaay more lexy
+	// but suits the need and clear to read
+
+	var strip int
+	var blockbuf string
+
+	// standard state machine approach
+	inblock := false
+	inraw := false
+	inhard := false
+	gotindent := false
+
+	scanner := bufio.NewScanner(strings.NewReader(input))
+
+	for scanner.Scan() {
+		txt := scanner.Text()
+		trimmed := strings.TrimSpace(txt)
+
+		// ignore blank lines
+		if !(inraw || inblock) && len(trimmed) == 0 {
+			continue
+		}
+
+		// infer the indent to strip for every line
+		if !gotindent && len(trimmed) > 0 {
+			for i, v := range txt {
+				if v != ' ' {
+					strip = i
+					gotindent = true
+					break
+				}
+			}
+		}
+
+		// strip convenience indent
+		if len(txt) >= strip {
+			txt = txt[strip:]
+		}
+
+		// raw block start
+		if !inblock && !inraw && len(txt) > 4 && txt[0:4] == "    " && len(trimmed) > 0 {
+			inraw = true
+			output += "\n\n" + txt
+			continue
+		}
+
+		// in raw block
+		if inraw && len(txt) > 4 {
+			output += "\n" + txt
+			continue
+		}
+
+		// raw block end
+		if inraw && len(trimmed) == 0 {
+			inraw = false
+			continue
+		}
+
+		// another block line, join it
+		if inblock && len(trimmed) > 0 {
+			if len(txt) >= 2 && txt[len(txt)-2:] == "  " {
+				inhard = true
+			}
+			space := " "
+			if inhard {
+				space = "\n"
+			}
+			blockbuf += space + trimmed
+			continue
+		}
+
+		// beginning of a new block
+		if !inblock && len(trimmed) > 0 {
+			inhard = false
+			inblock = true
+			if len(txt) >= 2 && txt[len(txt)-2:] == "  " {
+				inhard = true
+			}
+			blockbuf = trimmed
+			continue
+		}
+
+		// end block
+		if inblock && len(trimmed) == 0 {
+			inblock = false
+			output += "\n\n" + Wrap(blockbuf, width-strip-4)
+			continue
+		}
+	}
+
+	// flush last block
+	if inblock {
+		output += "\n\n" + Wrap(blockbuf, width-strip-4)
+	}
+	output = Indent(strings.TrimSpace(output), indent)
+	return
 }
