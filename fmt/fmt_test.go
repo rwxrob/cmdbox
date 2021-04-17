@@ -168,15 +168,19 @@ func ExamplePrintf() {
 }
 
 func TestScan(t *testing.T) {
+
+	// replace os.Stdin
 	f, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Error(err)
 	}
+	t.Logf("CreateTemp: %v\n", f.Name())
 	_fmt.Fprint(f, "5 true gophers")
 	f.Seek(0, 0)
 	orig := os.Stdin
-	defer func() { os.Stdin = orig }()
+	defer func() { os.Stdin = orig; os.Remove(f.Name()) }()
 	os.Stdin = f
+
 	var i int
 	var b bool
 	var s string
@@ -188,15 +192,19 @@ func TestScan(t *testing.T) {
 }
 
 func TestScanf(t *testing.T) {
+
+	// replace os.Stdin
 	f, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Error(err)
 	}
+	t.Logf("CreateTemp: %v\n", f.Name())
 	_fmt.Fprint(f, "5 true gophers")
 	f.Seek(0, 0)
 	orig := os.Stdin
-	defer func() { os.Stdin = orig }()
+	defer func() { os.Stdin = orig; os.Remove(f.Name()) }()
 	os.Stdin = f
+
 	var i int
 	var b bool
 	var s string
@@ -212,15 +220,19 @@ func TestScanf(t *testing.T) {
 }
 
 func TestScanln(t *testing.T) {
+
+	// replace os.Stdin
 	f, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Error(err)
 	}
-	_fmt.Fprint(f, "5 true gophers\n")
+	t.Logf("CreateTemp: %v\n", f.Name())
+	_fmt.Fprint(f, "5 true gophers")
 	f.Seek(0, 0)
 	orig := os.Stdin
-	defer func() { os.Stdin = orig }()
+	defer func() { os.Stdin = orig; os.Remove(f.Name()) }()
 	os.Stdin = f
+
 	var i int
 	var b bool
 	var s string
