@@ -64,19 +64,19 @@ func Fprintln(w io.Writer, a ...interface{}) (n int, err error) {
 	return _fmt.Fprintln(w, Stringify(a...)...)
 }
 
-// Fscan with Stringify().
+// Fscan delegates directly to fmt.Fscan().
 func Fscan(r io.Reader, a ...interface{}) (n int, err error) {
-	return _fmt.Fscan(r, Stringify(a...)...)
+	return _fmt.Fscan(r, a...)
 }
 
-// Fscanf with Stringify().
+// Fscanf with any interface{} for format.
 func Fscanf(r io.Reader, format interface{}, a ...interface{}) (n int, err error) {
-	return _fmt.Fscanf(r, String(format), Stringify(a...)...)
+	return _fmt.Fscanf(r, String(format), a...)
 }
 
-// Fscanln with Stringify().
+// Fscanln delegates directly to fmt.Fscanln().
 func Fscanln(r io.Reader, a ...interface{}) (n int, err error) {
-	return _fmt.Fscanln(r, Stringify(a...)...)
+	return _fmt.Fscanln(r, a...)
 }
 
 // Print with Stringify().
@@ -126,17 +126,17 @@ func Sprintln(a ...interface{}) string {
 
 // Sscan with Stringify().
 func Sscan(str interface{}, a ...interface{}) (n int, err error) {
-	return _fmt.Sscan(String(str), Stringify(a...)...)
+	return _fmt.Sscan(String(str), a...)
 }
 
 // Sscanf with Stringify().
 func Sscanf(str interface{}, format interface{}, a ...interface{}) (n int, err error) {
-	return _fmt.Sscanf(String(str), String(format), Stringify(a...)...)
+	return _fmt.Sscanf(String(str), String(format), a...)
 }
 
 // Sscanln with Stringify().
 func Sscanln(str interface{}, a ...interface{}) (n int, err error) {
-	return _fmt.Sscanln(String(str), Stringify(a...)...)
+	return _fmt.Sscanln(String(str), a...)
 }
 
 // ------------------ end fmt compatibility functions -----------------

@@ -17,8 +17,6 @@ func String(a interface{}) string {
 		return s()
 	case nil:
 		return ""
-		//	case []interface{}:
-		//		return _fmt.Sprintf("%v", s...)
 	default:
 		return _fmt.Sprintf("%v", s)
 	}
