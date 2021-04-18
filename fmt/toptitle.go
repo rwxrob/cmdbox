@@ -15,8 +15,17 @@ func TopTitle(left, center, right string, cols int) string {
 	rlen := len([]rune(right))
 	if llen+clen+rlen <= cols {
 		side := (cols - clen) / 2
-		lsp := strings.Repeat(" ", side-llen)
-		rsp := strings.Repeat(" ", side-rlen)
+		var rep int
+		rep = side - llen
+		if rep < 0 {
+			rep = 0
+		}
+		lsp := strings.Repeat(" ", rep)
+		rep = side - rlen
+		if rep < 0 {
+			rep = 0
+		}
+		rsp := strings.Repeat(" ", rep)
 		return left + lsp + center + rsp + right
 	}
 	if clen+rlen <= cols {

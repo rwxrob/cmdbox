@@ -4,6 +4,7 @@ import (
 	"unicode"
 )
 
+// peekWord returns the runes up to the next space.
 func peekWord(buf []rune, start int) []rune {
 	word := []rune{}
 	for _, r := range buf[start:] {
