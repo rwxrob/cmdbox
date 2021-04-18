@@ -1,9 +1,10 @@
 # 🍱 CmdBox Go Commander
 
-![WIP](https://img.shields.io/badge/status-wip-red)
-[![Go Report
-Card](https://goreportcard.com/badge/github.com/rwxrob/cmdbox)](https://goreportcard.com/report/github.com/rwxrob/cmdbox)
+![WIP](https://img.shields.io/badge/status-wip-red.svg)
 [![GoDoc](https://godoc.org/github.com/rwxrob/cmdbox?status.svg)](https://godoc.org/github.com/rwxrob/cmdbox)
+[![License](https://img.shields.io/badge/license-Apache2-brightgreen.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rwxrob/cmdbox)](https://goreportcard.com/report/github.com/rwxrob/cmdbox)
+[![Coverage](https://gocover.io/_badge/github.com/rwxrob/cmdbox)](https://gocover.io/github.com/rwxrob/cmdbox)
 
 *A commander for modern command-line human-computer interactions.*
 
