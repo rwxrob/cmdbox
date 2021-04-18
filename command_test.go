@@ -2,20 +2,27 @@ package cmdbox
 
 import (
 	"testing"
-
-	"github.com/rwxrob/cmdbox/util"
 )
 
 func TestNew(t *testing.T) {
 	testCases := []struct {
 		Name    string
 		SubCmds []string
+		Input   []string
 	}{
-		{Name: "calculator", SubCmds: []string{"add", "sub", "mul", "div"}},
-		{Name: "todo", SubCmds: []string{}},
+		{
+			Name:    "calculator",
+			SubCmds: []string{"add", "sub", "mul", "div"},
+			Input:   []string{"calculator", "add", "sub", "mul", "div"},
+		},
+		{
+			Name:    "todo",
+			SubCmds: []string{},
+			Input:   []string{"todo"},
+		},
 	}
 	for _, test := range testCases {
-		c := New(test.Name, test.SubCmds...)
+		c := New(test.Input...)
 		if c.Name != test.Name {
 			t.Fatalf("Expected Name: %s\nActual: %s\n", test.Name, c.Name)
 		}
@@ -31,17 +38,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewCommandHasName(t *testing.T) {
-	testCases := []struct {
-		Name    string
-		SubCmds []string
-	}{
-		{Name: "", SubCmds: []string{}},
-		{Name: "", SubCmds: []string{"start", "stop"}},
-	}
-	for _, test := range testCases {
-		if c := New(test.Name, test.SubCmds...); c != nil {
-			t.Fatal("Command.Name is undefined")
-		}
+	if c := New(); c.Name == "" {
+		t.Fatal("Command.Name is undefined")
 	}
 }
 
@@ -65,20 +63,20 @@ func TestHidden(t *testing.T) {
 
 func Testvsubcommands(t *testing.T) {
 	testCases := []struct {
-		Name    string
+		Input   []string
 		SubCmds []string
 	}{
 		{
-			Name:    "calculator",
+			Input:   []string{"calculator"},
 			SubCmds: []string{},
 		},
 		{
-			Name:    "calculator",
+			Input:   []string{"calculator", "add", "sub", "mul", "div"},
 			SubCmds: []string{"add", "sub", "mul", "div"},
 		},
 	}
 	for _, test := range testCases {
-		c := New(test.Name, test.SubCmds...)
+		c := New(test.Input...)
 		if len(c.vsubcommands()) != len(test.SubCmds) {
 			t.Fatalf("Expected %d commands\nActual: %d\n", len(test.SubCmds), len(c.vsubcommands()))
 		}
@@ -92,28 +90,22 @@ func Testvsubcommands(t *testing.T) {
 
 func TestSprintUsage(t *testing.T) {
 	testCases := []struct {
-		Name     string
-		Usage    util.Stringer
+		Input    []string
 		SubCmds  []string
+		Usage    string
 		Expected string
 	}{
 		{
-			Name:    "todo",
-			Usage:   "",
+			Input:   []string{"todo"},
 			SubCmds: []string{},
+			Usage:   "",
 			Expected: `**todo**
 `,
 		},
 		{
-			Name:     "todo",
-			Usage:    nil,
-			SubCmds:  []string{},
-			Expected: `**todo**`,
-		},
-		{
-			Name:    "calculator",
-			Usage:   "",
+			Input:   []string{"calculator", "add", "sub", "mul", "div"},
 			SubCmds: []string{"add", "sub", "mul", "div"},
+			Usage:   "",
 			Expected: `**calculator**
 **calculator** **add**
 **calculator** **sub**
@@ -122,19 +114,9 @@ func TestSprintUsage(t *testing.T) {
 `,
 		},
 		{
-			Name:    "calculator",
-			Usage:   nil,
-			SubCmds: []string{"add", "sub", "mul", "div"},
-			Expected: `**calculator** **add**
-**calculator** **sub**
-**calculator** **mul**
-**calculator** **div**
-`,
-		},
-		{
-			Name:    "crud",
-			Usage:   "[create|read|update|delete]",
+			Input:   []string{"crud", "create", "read", "update", "delete"},
 			SubCmds: []string{"create", "read", "update", "delete"},
+			Usage:   "[create|read|update|delete]",
 			Expected: `**crud** [create|read|update|delete]
 **crud** **create**
 **crud** **read**
@@ -144,7 +126,7 @@ func TestSprintUsage(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		c := New(test.Name, test.SubCmds...)
+		c := New(test.Input...)
 		c.Usage = test.Usage
 		if len(test.SubCmds) > 0 {
 			for _, subcmd := range test.SubCmds {
@@ -160,19 +142,19 @@ func TestSprintUsage(t *testing.T) {
 
 func TestSprintCommandSummaries(t *testing.T) {
 	testCases := []struct {
-		Name      string
+		Input     []string
 		SubCmds   []string
 		Summaries []string
 		Expected  string
 	}{
 		{
-			Name:      "print",
+			Input:     []string{"print"},
 			SubCmds:   []string{},
 			Summaries: []string{},
 			Expected:  "",
 		},
 		{
-			Name:      "pomo",
+			Input:     []string{"pomo", "start", "stop"},
 			SubCmds:   []string{"start", "stop"},
 			Summaries: []string{"Starts the pomodoro", "Stops the pomodoro"},
 			Expected: `**start**      Starts the pomodoro
@@ -181,7 +163,7 @@ func TestSprintCommandSummaries(t *testing.T) {
 		},
 	}
 	for _, test := range testCases {
-		c := New(test.Name, test.SubCmds...)
+		c := New(test.Input...)
 		if len(test.SubCmds) > 0 {
 			for i, subcmd := range test.SubCmds {
 				sc := New(subcmd)
@@ -197,56 +179,50 @@ func TestSprintCommandSummaries(t *testing.T) {
 
 func TestMarshalJSON(t *testing.T) {
 	testCases := []struct {
-		Name     string
-		Usage    util.Stringer
-		Author   util.Stringer
-		License  util.Stringer
-		SubCmds  []string
+		Input    []string
+		Usage    string
+		Author   string
+		License  string
 		Expected string
 	}{
 		{
-			Name:     "todo",
+			Input:    []string{"todo"},
 			Usage:    "",
 			Author:   "",
 			License:  "",
-			SubCmds:  []string{},
 			Expected: `{"Name":"todo"}`,
 		},
 		{
-			Name:     "print",
+			Input:    []string{"print"},
 			Usage:    "",
 			Author:   "John Doe",
 			License:  "",
-			SubCmds:  []string{},
 			Expected: `{"Author":"John Doe","Name":"print"}`,
 		},
 		{
-			Name:     "pomo",
+			Input:    []string{"pomo"},
 			Usage:    "[start|stop]",
 			Author:   "Rob",
 			License:  "",
-			SubCmds:  []string{},
 			Expected: `{"Author":"Rob","Name":"pomo","Usage":"[start|stop]"}`,
 		},
 		{
-			Name:     "express",
+			Input:    []string{"express"},
 			Usage:    "",
 			Author:   "",
 			License:  "MIT",
-			SubCmds:  []string{},
 			Expected: `{"License":"MIT","Name":"express"}`,
 		},
 		{
-			Name:     "pomo",
+			Input:    []string{"pomo", "start", "stop"},
 			Usage:    "",
 			Author:   "",
 			License:  "",
-			SubCmds:  []string{"start", "stop"},
 			Expected: `{"Name":"pomo","Subcommands":["start","stop"]}`,
 		},
 	}
 	for _, test := range testCases {
-		c := New(test.Name, test.SubCmds...)
+		c := New(test.Input...)
 		c.Usage = test.Usage
 		c.Author = test.Author
 		c.License = test.License
@@ -263,18 +239,11 @@ func TestMarshalJSON(t *testing.T) {
 func TestVersionLine(t *testing.T) {
 	testCases := []struct {
 		Name      string
-		Version   util.Stringer
-		Copyright util.Stringer
-		License   util.Stringer
+		Version   string
+		Copyright string
+		License   string
 		Expected  string
 	}{
-		{
-			Name:      "print",
-			Version:   nil,
-			Copyright: nil,
-			License:   nil,
-			Expected:  "",
-		},
 		{
 			Name:      "print",
 			Version:   "",
@@ -285,7 +254,7 @@ func TestVersionLine(t *testing.T) {
 		{
 			Name:      "print",
 			Version:   "v1.0.0",
-			Copyright: nil,
+			Copyright: "",
 			License:   "MIT",
 			Expected:  "print v1.0.0 (MIT)",
 		},
@@ -363,16 +332,32 @@ func TestAdd(t *testing.T) {
 
 func TestSubcommands(t *testing.T) {
 	testCases := []struct {
+		Input   []string
 		SubCmds []string
 	}{
-		{SubCmds: []string{}},
-		{SubCmds: []string{"add"}},
-		{SubCmds: []string{"add", "sub"}},
-		{SubCmds: []string{"add", "sub", "mul"}},
-		{SubCmds: []string{"add", "sub", "mul", "div"}},
+		{
+			Input:   []string{"test"},
+			SubCmds: []string{},
+		},
+		{
+			Input:   []string{"test", "add"},
+			SubCmds: []string{"add"},
+		},
+		{
+			Input:   []string{"test", "add", "sub"},
+			SubCmds: []string{"add", "sub"},
+		},
+		{
+			Input:   []string{"test", "add", "sub", "mul"},
+			SubCmds: []string{"add", "sub", "mul"},
+		},
+		{
+			Input:   []string{"test", "add", "sub", "mul", "div"},
+			SubCmds: []string{"add", "sub", "mul", "div"},
+		},
 	}
 	for _, test := range testCases {
-		c := New("test", test.SubCmds...)
+		c := New(test.Input...)
 		subs := c.Subcommands()
 		if len(subs) != len(test.SubCmds) {
 			t.Fatalf("Expected commands to have %d subcommands\nActual: %d\n", len(test.SubCmds), len(subs))
@@ -387,20 +372,23 @@ func TestSubcommands(t *testing.T) {
 
 func TestSuncommandUsage(t *testing.T) {
 	testCases := []struct {
+		Input     []string
 		SubCmds   []string
 		SubUsages []string
 	}{
 		{
+			Input:     []string{"test"},
 			SubCmds:   []string{},
 			SubUsages: []string{},
 		},
 		{
+			Input:     []string{"test", "start", "stop"},
 			SubCmds:   []string{"start", "stop"},
 			SubUsages: []string{"Starts the command", "Stops the command"},
 		},
 	}
 	for _, test := range testCases {
-		c := New("test", test.SubCmds...)
+		c := New(test.Input...)
 		if len(test.SubCmds) > 0 {
 			for i, usage := range test.SubUsages {
 				sc := New(test.SubCmds[i])
