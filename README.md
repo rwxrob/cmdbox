@@ -462,13 +462,14 @@ difficult to read, unformatted help documentation.
 
 ## Terminology
 
-* **tool** - a CmdBox command
+* **command** - `foo` or `mycmd foo`
+* **tool** - another name for *command*
+* **module** - a Go module containing CmdBox
 
 ## Conventions
 
-By convention CmdBox commands are called *tools* (as in that would go
-into a *tool box*) and are always prefixed with `cmdbox-` for easy
-discovery on GitHub, etc.
+* Prefix repos with `cmdbox-` for easy discovery.
+* Use `x` for command pointer `func init() {x := cmdbox.Add("name")}
 
 ## Real World Examples
 
