@@ -39,25 +39,22 @@ type Command struct {
 	Default     interface{} // default subcommand
 }
 
-var noname = 1
-
 // New initializes a new Command and returns a pointer to it. An
 // optional list of subcommand name strings can be passed as arguments
-// and will be added with Add(). Note that calling New is the *only* way
-// to add a new Command to the protected cmdbox.Commands package index,
-// which can be read, however, with cmdbox.Commands().
-func New(a ...string) *Command {
+// and will be added with c.Add(), the first being assigned to
+// c.Default. Note that calling New is the *only* way to add a new
+// Command to the protected commands registry (which can be read with
+// the cmdbox.Commands() function). If a name conflicts with one that
+// has already been added an underscore (_) has added.  This can be
+// renamed with cmdbox.Rename() or removed with cmdbox.Remove().
+func New(name string, a ...string) *Command {
 	c := new(Command)
-	if len(a) == 0 {
-		c.Name = "cmd" + fmt.String(noname)
-		noname++
-	} else {
-		c.Name = a[0]
-	}
+	c.Name = name
 	c.subcommands = []string{} // used by add
 	commands[c.Name] = c
 	if len(a) > 1 {
-		c.Add(a[1:]...)
+		c.Add(a...)
+		c.Default = a[0]
 	}
 	c.Other = map[string]interface{}{}
 	return c
@@ -273,11 +270,12 @@ func (c *Command) UsageError() error {
 }
 
 // Complete prints the completion replies for the current context (See
-// Programmble Completion in the bash man page.) The line is passed exactly as
-// detected leaving the maximum flexibility for parsing and matching up to the
-// Completion function.  The Completion method will be delegated if defined.
-// Otherwise, the Subcommands are used to provide traditional prefix
-// completion recursively.
+// Programmble Completion in the bash man page.) The line is passed
+// exactly as detected leaving the maximum flexibility for parsing and
+// matching up to the Completion function.  The Completion method will
+// be delegated if defined.  Otherwise, the subcommands (provided when
+// New() was called) are used to provide traditional prefix completion
+// recursively.
 func (c *Command) Complete(compline string) {
 	if c.Completion != nil {
 		for _, name := range c.Completion(compline) {
