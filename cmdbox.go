@@ -89,6 +89,6 @@ func JSON() string {
 	s := make(map[string]interface{})
 	s["PackageVersion"] = Version
 	s["Main"] = Main.Name
-	s["Commands"] = VisibleCommands()
+	s["Register"] = Register
 	return util.ConvertToJSON(s)
 }

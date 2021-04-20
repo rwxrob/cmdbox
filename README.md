@@ -52,7 +52,7 @@ their own Git repos --- and composing them into a single command index
 within the main executable program. This is accomplished through simple,
 judicious use of the `init()` function in each file. This approach
 incurs no more performance hit than would already be required for any
-other such solution and is 100% concurrency safe.
+other such solution and is 100% safe for concurrency.
 
 By the time the command-line application's `main()` function is called
 all it has to do is `cmdbox.Execute("mycmd")` to execute the top-level
@@ -173,7 +173,13 @@ were made. It is provided in the hopes of addressing other design
 concerns anyone reviewing this package might have before choosing to use
 it.
 
-* To this day command options plague developers and users by different
+* A true rooted node tree of commands was discarded in favor of a flat
+  map registry of internal commands despite the potential key name
+  conflicts due to the unnecessary complication it incurred upon the
+  otherwise light, clear, and intuitive command creation and declaration
+  syntax with `cmdbox.New()`.
+
+* To this day, command options plague developers and users by different
   ways of dealing with single or double dashes, the equals sign, single
   letter options and more. Most are also not friendly to the use of
   UTF-8 runes in the upper ranges.
@@ -469,7 +475,8 @@ difficult to read, unformatted help documentation.
 ## Conventions
 
 * Prefix repos with `cmdbox-` for easy discovery.
-* Use `x` for command pointer `func init() {x := cmdbox.Add("name")}
+* Use `x` for Command pointer `func init() {x := cmdbox.Add("name")}`
+* Use `x` for Command method receivers `func (x *Command) ...`
 
 ## Real World Examples
 
