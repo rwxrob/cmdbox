@@ -220,7 +220,7 @@ func New(name string, a ...string) *Command {
 func version() string {
 	pwd, err := os.Getwd()
 	if err != nil {
-		// handle error
+		return ""
 	}
 	tagFolder := filepath.Join(pwd, ".git", "refs", "tags")
 	if tagFolder == "" {
@@ -229,7 +229,7 @@ func version() string {
 	var tags []string
 	files, err := os.ReadDir(tagFolder)
 	if err != nil {
-		// handle err
+		return ""
 	}
 	if len(files) < 1 {
 		return defaultVersion
@@ -240,7 +240,7 @@ func version() string {
 		}
 		matched, err := regexp.MatchString(`v[\d+].[\d+].[\d+]`, file.Name)
 		if err != nil {
-			// handle error
+			return ""
 		}
 		if matched {
 			tags = append(tags, file.Name)
