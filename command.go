@@ -3,11 +3,17 @@ package cmdbox
 import (
 	"encoding/json"
 	_fmt "fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/rwxrob/cmdbox/fmt"
 	"github.com/rwxrob/cmdbox/util"
 )
+
+var defaultVersion = "v0.0.1"
 
 // Command contains a Method or delegates to  one or more other Commands
 // by name. Typically a Command is created within an init() function by
@@ -204,6 +210,49 @@ func New(name string, a ...string) *Command {
 	}
 	x.Other = map[string]interface{}{}
 	return x
+}
+
+// version returns the newest version tag from .git/refs/tags
+// but if the folder is empty or there is no valid version tags
+// v0.0.1 will be returned.
+// Version tags are evaluated based on their name which has to
+// follow a specific pattern, e.g. v0.0.1 or v1.0.2
+func version() string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		// handle error
+	}
+	tagFolder := filepath.Join(pwd, ".git", "refs", "tags")
+	if tagFolder == "" {
+		return defaultVersion
+	}
+	var tags []string
+	files, err := os.ReadDir(tagFolder)
+	if err != nil {
+		// handle err
+	}
+	if len(files) < 1 {
+		return defaultVersion
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		matched, err := regexp.MatchString(`v[\d+].[\d+].[\d+]`, file.Name)
+		if err != nil {
+			// handle error
+		}
+		if matched {
+			tags = append(tags, file.Name)
+		}
+	}
+	if len(tags) < 1 {
+		return defaultVersion
+	} else if len(tags) == 1 {
+		return tags[0]
+	}
+	sort.Strings(tags)
+	return tags[len(tags)-1]
 }
 
 // Hidden returns true if the command name begins with underscore ('_').
