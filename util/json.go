@@ -9,8 +9,8 @@ import (
 // two spaces of human-readable indenting. If an error is encountered
 // while marshalling an ERROR key will be created with the string value
 // of the error as its value.
-func ConvertToJSON(thing interface{}) string {
-	byt, err := json.MarshalIndent(thing, "", "  ")
+func ConvertToJSON(a interface{}) string {
+	byt, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("{\"ERROR\": \"%v\"}", err)
 	}
