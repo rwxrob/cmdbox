@@ -34,9 +34,10 @@ func ExitUnimplemented(thing interface{}) {
 	ExitError(Unimplemented(thing))
 }
 
-// TrapPanic recovers from any panic and more gracefully displays the error as
-// an exit message. It can be redefined to behave differently or set to an
-// empty func() to allow the panic to blow up with its full trace log.
+// TrapPanic recovers from any panic and more gracefully displays the
+// error as an exit message. It can be redefined to behave differently
+// or set to an empty func() to allow the panic to blow up with its full
+// trace log.
 var TrapPanic = func() {
 	if r := recover(); r != nil {
 		ExitError(r)
