@@ -6,7 +6,8 @@ import (
 
 // Execute traps all panics, detects completion context and completes,
 // or looks up the Command pointer for name from cmdbox.Register sets
-// cmdbox.Main to it, then Calls it passing cmd.Args.  Execute is
+// cmdbox.Main to it, adds the 'help' and 'version' prefabs (if they are
+// not yet added), then Calls it passing cmd.Args.  Execute is
 // gauranteed to always exit the program cleanly. See Register, Main,
 // TrapPanic().
 func Execute(name string) {

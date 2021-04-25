@@ -20,27 +20,27 @@ var defaultVersion = "v0.0.1"
 // calling cmdbox.New:
 //
 //     import (
-//           "github.com/rwxrob/cmdbox"
-//           "github.com/rwxrob/cmdbox/fmt"
+//         "github.com/rwxrob/cmdbox"
+//         "github.com/rwxrob/cmdbox/fmt"
 //     )
 //
 //     func init() {
-//          // use x by convention
-//          x := cmdbox.New("greet","hi","hello")
-//          x.Method = func(args []string) error {
-//                if len(args) == 0 {
-//                      args = append(args, "hi")
-//                }
-//                switch args[0] {
-//                case "hello":
-//                      fmt.Println("*Hello!*")
-//                case "hi":
-//                      fmt.Println("*Hello!*")
-//                default:
-//                      return x.UsageError()
-//                }
-//                return nil
-//          }
+//         // use x by convention
+//         x := cmdbox.New("greet","hi","hello")
+//         x.Method = func(args []string) error {
+//             if len(args) == 0 {
+//                 args = append(args, "hi")
+//             }
+//             switch args[0] {
+//             case "hello":
+//                 fmt.Println("*Hello!*")
+//             case "hi":
+//                 fmt.Println("*Hello!*")
+//             default:
+//                 return x.UsageError()
+//             }
+//             return nil
+//         }
 //     }
 //
 // Providing the method, documentation, and tab completion rules in
@@ -51,8 +51,8 @@ var defaultVersion = "v0.0.1"
 // potentially very succinct commands.
 //
 //    import (
-//        "github.com/rwxrob/cmdbox"
-//        _ "github.com/rwxrob/cmdbox-greet"
+//          "github.com/rwxrob/cmdbox"
+//          _ "github.com/rwxrob/cmdbox-greet"
 //    )
 //
 //    func main() { cmdbox.Run() }
@@ -61,10 +61,10 @@ var defaultVersion = "v0.0.1"
 // monolith one of its commands:
 //
 //    import (
-//        "github.com/rwxrob/cmdbox"
-//        _ "github.com/rwxrob/cmdbox-greet"
-//        _ "github.com/rwxrob/cmdbox-timer"
-//        _ "github.com/rwxrob/cmdbox-pomo"
+//          "github.com/rwxrob/cmdbox"
+//          _ "github.com/rwxrob/cmdbox-greet"
+//          _ "github.com/rwxrob/cmdbox-timer"
+//          _ "github.com/rwxrob/cmdbox-pomo"
 //    )
 //
 //    func init() {
@@ -153,10 +153,16 @@ type Command struct {
 }
 
 // New initializes a new Command and returns a pointer to it. An
-// optional list of sub-Commands can be passed as arguments and will be
-// added with Command.Add(). The first argument after the name is
+// optional list of Commands can be passed as arguments and will be
+// added with Command.Add(). The first in the list of Commands will be
 // assigned to Command.Default but can be overriden with a direct
-// assignment later.
+// assignment later. The Commands 'help' and 'version' will
+// automatically be added and need to be handled if using a Method.
+//
+//    case "help":
+//        cmdbox.Call("help",args)
+//    case "version":
+//        cmdbox.Call("version",args)
 //
 // If a Command has a Method, then the Commands are interpreted as
 // keywords for actions to be handled within that Command.Method
@@ -175,24 +181,20 @@ type Command struct {
 // errant calls to unregistered Commands (which otherwise produce an
 // "Unimplemented" error.
 //
-// If any of the Commands are the words 'help' or 'version' then these
-// will be fulfilled by the those named as such in packages within the
-// cmdtab/prefab package. Only 'help' and 'version' are allowed to be
-// overriden by a call to New("help") or New("version") in order to
-// allow developers to override these defaults and provide their own
-// versions of these for their own applications. These prefabs are just
-// the defaults but there is some desire to keep all cmdbox tools as
-// consistent as possible, but this is a decision for cmdbox users to
-// decide.
+// Only 'help' and 'version' are allowed to be overriden by a call to
+// New("help") or New("version") in order to allow developers to
+// override these defaults and provide their own versions of these for
+// their own applications. See builtins.go.
 //
-// If a name conflicts with one that has already been added then an
-// underscore (_) is appended to the duplicate name. Late this can be
-// renamed with cmdbox.Rename() or removed with cmdbox.Remove() or
-// changed directly by accessing it from the cmdbox.Register. If the
-// Register key is changed do not forget to set the Command.As field as
-// well to match. Generally the original Name should never be changed
-// since it is referred to throughout the rest of the embedded Command
-// documentation.
+// Otherwise, if a name conflicts with one that has already been added
+// to the Register then an underscore (_) is appended to the name of the
+// duplicate. Later this can be renamed with cmdbox.Rename() or removed
+// with cmdbox.Remove() or changed directly by accessing it from the
+// cmdbox.Register. If the Register key is changed do not forget to set
+// the Command.As field as well to match. The original Name should
+// really never be changed since it is referred to throughout the
+// embedded Command documentation and is often the name of the command
+// module package and git repo.
 //
 func New(name string, a ...string) *Command {
 	x := new(Command)
@@ -208,6 +210,7 @@ func New(name string, a ...string) *Command {
 		x.Add(a...)
 		x.Default = a[0]
 	}
+	x.Add("help", "version")
 	x.Other = map[string]interface{}{}
 	return x
 }

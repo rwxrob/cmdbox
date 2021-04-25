@@ -2,8 +2,7 @@ package util
 
 import "fmt"
 
-// Dump simply dumps the stuff passed to it to standard output. Use for
-// debugging. Use Print for general printing.
-func Dump(stuff ...interface{}) {
-	fmt.Printf("%v\n", stuff)
-}
+// Dump prints the string form of the stuff passed to it to standard
+// output. Use for debugging. Use the cmdbox/fmt package for general
+// printing.
+func Dump(a ...interface{}) { fmt.Printf("%v\n", a) }
