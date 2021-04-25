@@ -17,8 +17,8 @@ func Execute(name string) {
 		ExitUnimplemented(name)
 	}
 	Main = command
-	if comp.Line != "" {
-		Complete()
+	if comp.Yes() {
+		Main.Complete()
 		Exit()
 	}
 	err := command.Call(Args)

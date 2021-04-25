@@ -8,9 +8,7 @@ package cmdbox
 
 import (
 	"os"
-	"strings"
 
-	"github.com/rwxrob/cmdbox/comp"
 	"github.com/rwxrob/cmdbox/util"
 )
 
@@ -51,33 +49,6 @@ var Args = os.Args[1:]
 // Main contains the main command passed to Execute to start the
 // program. While it can be changed by Subcommands it usually should not be.
 var Main *Command
-
-// CompLineFix activates an attempt to correct the comp.Line to work best with
-// completion. For example, when an executable that uses the cmd package is
-// renamed, symbolicly linked, or called as a path and not just the single
-// command name. True bydefault. Set to false to leave the comp.Line exactly as
-// it is detected but note that depending on a specific form of
-// comp.Line may not be consistent across operating systems. Also see
-// util.MultiName.
-var CompLineFix bool = true
-
-// Complete calls complete on the Main command passing it comp.Line. No
-// verification of Main's existence is checked. The comp.Line is always changed
-// to match the actual name of the Main command even if the executable name has
-// been changed or called as an alias. This ensures proper tab completion no
-// matter what the actual executable is called.
-func Complete() {
-	if !CompLineFix {
-		Main.Complete(comp.Line)
-		return
-	}
-	i := strings.Index(comp.Line, " ")
-	if i < 0 {
-		Main.Complete(Main.Name)
-	} else {
-		Main.Complete(Main.Name + comp.Line[i:])
-	}
-}
 
 // JSON returns a JSON representation of the state of the cmd package including
 // the main command and all subcommands from the internal index. This can be

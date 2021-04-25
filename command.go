@@ -5,6 +5,7 @@ import (
 	_fmt "fmt"
 	"strings"
 
+	"github.com/rwxrob/cmdbox/comp"
 	"github.com/rwxrob/cmdbox/fmt"
 	"github.com/rwxrob/cmdbox/util"
 )
@@ -125,25 +126,25 @@ import (
 // * https://github.com/rwxrob/cmdbox-pomo
 //
 type Command struct {
-	Name        string                     // <= 14 recommended
-	As          string                     // only set if renamed
-	Summary     interface{}                // > 65 truncated
-	Version     interface{}                // semantic version (v0.1.3)
-	Usage       interface{}                // following docopt syntax
-	Description interface{}                // long form, see fmt.Emph()
-	Examples    interface{}                // long form, see fmt.Emph()
-	SeeAlso     interface{}                // links, other commands, etc.
-	Author      interface{}                // email format, commas between
-	Git         interface{}                // repo location, no schema ok
-	Issues      interface{}                // full web URL
-	Copyright   interface{}                // legal copyright statement
-	License     interface{}                // released under license(s)
-	Other       map[string]interface{}     // other (custom) doc sections
-	Method      func(args []string) error  // optional method, see Call()
-	Params      []string                   // params, completion only
-	CompFunc    func(line string) []string // override completion func
-	Commands    []string                   // subcmds/actions, see Call()
-	Default     interface{}                // default subcmd/action
+	Name        string                    // <= 14 recommended
+	As          string                    // only set if renamed
+	Summary     interface{}               // > 65 truncated
+	Version     interface{}               // semantic version (v0.1.3)
+	Usage       interface{}               // following docopt syntax
+	Description interface{}               // long form, see fmt.Emph()
+	Examples    interface{}               // long form, see fmt.Emph()
+	SeeAlso     interface{}               // links, other commands, etc.
+	Author      interface{}               // email format, commas between
+	Git         interface{}               // repo location, no schema ok
+	Issues      interface{}               // full web URL
+	Copyright   interface{}               // legal copyright statement
+	License     interface{}               // released under license(s)
+	Other       map[string]interface{}    // other (custom) doc sections
+	Method      func(args []string) error // optional method, see Call()
+	Params      []string                  // params, completion only
+	CompFunc    comp.Func                 // set tab completion function
+	Commands    []string                  // subcmds/actions, see Call()
+	Default     interface{}               // default subcmd/action
 }
 
 // New initializes a new Command and returns a pointer to it. An
@@ -440,64 +441,59 @@ func (x *Command) UsageError() error {
 }
 
 // Complete prints the tab completion replies for the current context.
-// The current command line (COMP_LINE) is passed exactly as detected
-// leaving maximum flexibility for parsing and matching from the
-// optional Command.CompFunc function if defined. Otherwise, the names
-// of the Commands and any Params are used to provide the list for
-// completion. See Command.CompFunc and Programmable Completion in the
-// Bash man page.
-func (x *Command) Complete(line string) {
-	if x.CompFunc != nil {
-		for _, name := range x.CompFunc(line) {
-			fmt.Println(name)
-		}
-		return
-	}
-	words := strings.Split(strings.TrimSpace(line), " ")
-	if len(words) >= 2 {
-		name := words[len(words)-2]
-		complete := words[len(words)-1]
-		if x.Name != name {
-			if cmd, has := Register[name]; has {
-				line = strings.Join(words[len(words)-2:], " ")
-				cmd.Complete(line)
+func (x *Command) Complete() {
+	/*
+		if x.CompFunc != nil {
+			for _, name := range x.CompFunc(line) {
+				fmt.Println(name)
 			}
 			return
 		}
-		for _, cmdname := range x.Commands {
-			if cmdname == complete {
-				if cmd, has := Register[cmdname]; has {
-					line = strings.Join(words[len(words)-1:], " ")
+		words := strings.Split(strings.TrimSpace(line), " ")
+		if len(words) >= 2 {
+			name := words[len(words)-2]
+			complete := words[len(words)-1]
+			if x.Name != name {
+				if cmd, has := Register[name]; has {
+					line = strings.Join(words[len(words)-2:], " ")
 					cmd.Complete(line)
 				}
 				return
 			}
-			if strings.HasPrefix(cmdname, complete) {
+			for _, cmdname := range x.Commands {
+				if cmdname == complete {
+					if cmd, has := Register[cmdname]; has {
+						line = strings.Join(words[len(words)-1:], " ")
+						cmd.Complete(line)
+					}
+					return
+				}
+				if strings.HasPrefix(cmdname, complete) {
+					fmt.Println(cmdname)
+				}
+			}
+			if x.Params != nil {
+				for _, param := range strings.Split(fmt.String(x.Params), " ") {
+					if complete != param && strings.HasPrefix(param, complete) {
+						fmt.Println(param)
+					}
+				}
+			}
+			return
+		}
+
+		// do not include hidden commands in completion
+		for _, cmdname := range x.Commands {
+			if cmdname[0] != '_' {
 				fmt.Println(cmdname)
 			}
 		}
-		if x.Params != nil {
-			for _, param := range strings.Split(fmt.String(x.Params), " ") {
-				if complete != param && strings.HasPrefix(param, complete) {
-					fmt.Println(param)
-				}
-			}
+
+		// always include params in completion
+		for _, param := range strings.Split(fmt.String(x.Params), " ") {
+			fmt.Println(param)
 		}
-		return
-	}
-
-	// do not include hidden commands in completion
-	for _, cmdname := range x.Commands {
-		if cmdname[0] != '_' {
-			fmt.Println(cmdname)
-		}
-	}
-
-	// always include params in completion
-	for _, param := range strings.Split(fmt.String(x.Params), " ") {
-		fmt.Println(param)
-	}
-
+	*/
 }
 
 func (x *Command) Title() string {
