@@ -1,15 +1,16 @@
-/*
-Package comp is the tab completion subpackage of CmdBox. Currently only Bash Programmable Completion and detection with `complete -C cmd cmd` is supported.
-*/
 package comp
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
-// Line is set if a completion context from the shell is detected. (For
-// Bash it is COMP_LINE. See Programmable Completion in the bash man
-// page.)
-var Line string
+// Line returns the full current command line being evaluated for this
+// executable being run in completion context. (For Bash it is when
+// COMP_LINE is set. See Programmable Completion in the bash man page.)
+//
+// Only Bash is supported.
+func Line() string { return os.Getenv("COMP_LINE") }
 
-func init() {
-	Line = os.Getenv("COMP_LINE") // bash only for now
-}
+// LineArgs returns Line but as a slice of strings.
+func LineArgs() []string { return strings.Split(Line(), " ") }
