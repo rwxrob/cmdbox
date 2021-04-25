@@ -28,7 +28,7 @@ func PrintPaged(buf, status string) {
 		status = PagedDefStatus
 	}
 	_, err := exec.LookPath("less")
-	if err != nil || term.LineCount(buf) < int(term.WinSize.Row) {
+	if err != nil || LineCount(buf) < int(term.WinSize.Row) {
 		Print(buf)
 		return
 	}
