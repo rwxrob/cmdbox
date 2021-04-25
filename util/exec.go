@@ -1,43 +1,43 @@
 package util
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"syscall"
 )
 
-// Exec (not to be confused with Execute) will check for the existance
+// Exec (not to be confused with Execute) will check for the existence
 // of the first argument as an executable on the system and then execute
 // it using syscall.Exec(), which replaces the currently running program
 // with the new one in all respects (stdin, stdout, stderr, process ID,
-// etc).
+// signal handling, etc).
 //
 // Note that although this is exceptionally faster and cleaner than
 // calling any of the os/exec variations it may be less compatible with
 // different operating systems.
 func Exec(args ...string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("missing name of executable")
+	}
 	path, err := exec.LookPath(args[0])
 	if err != nil {
 		return err
 	}
+	// exits the program unless there is an error
 	return syscall.Exec(path, args, os.Environ())
 }
 
-// ExitExec exits the currently running Go program and hands off memory
-// and control to the executable passed as the first in a string of
-// arguments along with the arguments to pass along to the called
-// executable. This is only supported on systems that support Go's
-// syscall.Exec() and underlying execve() system call.
-func ExitExec(xnargs ...string) error {
-	return syscall.Exec(xnargs[0], xnargs, os.Environ())
-}
-
-// Run checks for existance of first argument as an executable on the
+// Run checks for existence of first argument as an executable on the
 // system and then runs it without exiting in a way that is supported
 // across different operating systems. The stdin, stdout, and stderr are
 // connected directly to that of the calling program. Use more specific
-// exec alternatives if intercepting stdout and stderr are desired.
+// exec alternatives if intercepting stdout and stderr are desired. Also
+// see Exec.
 func Run(args ...string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("missing name of executable")
+	}
 	path, err := exec.LookPath(args[0])
 	if err != nil {
 		return err
