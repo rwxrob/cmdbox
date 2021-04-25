@@ -7,6 +7,8 @@ import (
 )
 
 func ExampleMonth() {
+	defer func() { comp.This = "" }()
+
 	for _, ex := range []string{"j", "J", "ju", "jul", "d", ""} {
 		comp.This = ex // simulate been typed and tab pressed
 		fmt.Println(comp.Month())

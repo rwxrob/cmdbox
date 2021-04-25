@@ -56,7 +56,7 @@ func Rename(from, to string) {
 	Unlock()
 }
 
-// Visible returns a map of only the visible Register Commaneds not
+// Visible returns a map of only the visible Register Commands not
 // beginning with underscore ('_'). See Register and Hidden().
 func Visible() map[string]*Command {
 	vis := make(map[string]*Command, len(Register))
