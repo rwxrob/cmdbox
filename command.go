@@ -226,7 +226,7 @@ func version() string {
 		return ""
 	}
 	tagFolder := filepath.Join(pwd, ".git", "refs", "tags")
-	if tagFolder == "" {
+	if _, err = os.Stat(tagFolder); os.IsNotExist(err) {
 		return defaultVersion
 	}
 	var tags []string
@@ -241,12 +241,12 @@ func version() string {
 		if file.IsDir() {
 			continue
 		}
-		matched, err := regexp.MatchString(`v[\d+].[\d+].[\d+]`, file.Name)
+		matched, err := regexp.MatchString(`v[\d+].[\d+].[\d+]`, file.Name())
 		if err != nil {
 			return ""
 		}
 		if matched {
-			tags = append(tags, file.Name)
+			tags = append(tags, file.Name())
 		}
 	}
 	if len(tags) < 1 {
