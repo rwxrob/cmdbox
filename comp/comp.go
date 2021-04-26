@@ -43,10 +43,27 @@ func Line() string {
 	return os.Getenv("COMP_LINE")
 }
 
-// Args returns Line but as a slice of strings.
-func Args() []string { return strings.Split(Line(), " ") }
+// Args returns Line but as a slice of strings. If the Line() has one or
+// more spaces at the end include an space (" ") as the last item. This
+// is to distinquish between users wanting to tab on prefixes versus
+// all the possibilities for a command.
+func Args() []string {
+	args := []string{}
+	line := Line()
+	if line == "" {
+		return args
+	}
+	args = strings.Split(line, " ")
+	if line[len(line)-1] == ' ' {
+		args = append(args, " ")
+	}
+	return args
+}
 
-// Word returns the last LineArgs or empty string.
+// Word returns the last of Args or empty string. This includes the
+// special single space (" ") string indicating there were trailing
+// spaces when completion was invoked. This should not be confused with
+// the empty string indicating Args was empty.
 func Word() string {
 	args := Args()
 	if len(args) > 0 {

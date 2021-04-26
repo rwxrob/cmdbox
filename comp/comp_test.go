@@ -49,8 +49,11 @@ func ExampleWord() {
 	comp.This = ""
 	fmt.Printf("%q\n", comp.Word())
 	fmt.Println(comp.Word() == "")
+	comp.This = "kn "
+	fmt.Printf("%q\n", comp.Word())
 	// Output:
 	// Line
 	// ""
 	// true
+	// " "
 }
