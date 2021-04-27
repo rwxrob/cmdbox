@@ -19,10 +19,13 @@ import (
 // state, such as cmdbox.This.) See Line(), Args(), Word() as well.
 var This string
 
-// Func defines a tab completion function that can sense its completion
-// context and return a list of completion strings. Also see Line and
-// LineArgs and Bash Programmable Completion.
-type Func func() []string
+// Func defines a type for first-class tab completion closure functions
+// that can accept a varying number of interface{} arguments, sense its
+// completion context (see Line, Args, Word, and This), and return
+// a list of completion strings.  Managing completion logic as first
+// class functions allows for easier completion testing and modularity.
+// An empty string slice must always be returned even on failure.
+type Func func(i ...interface{}) []string
 
 // Yes returns true if the current executable is being called in
 // a completion context, usually somone tapping tab. Currently, this is
