@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	_fmt "fmt"
 	"strings"
+	"sync"
 
 	"github.com/rwxrob/cmdbox/comp"
 	"github.com/rwxrob/cmdbox/fmt"
@@ -94,13 +95,18 @@ import (
 //     skeeziks h<TAB>
 //     skeeziks help
 //
-// Tab completion rules default to the list of Commands, but can be
-// overriden per Command by defining and assigning an anonymous function
-// to the CompFunc field (which is passed the value of COMP_LINE in
-// Bash). This allows for dynamic tab completion possibilities that have
+// Tab completion rules default to the list of Commands and Parameter,
+// but can be overriden per Command by defining and assigning an
+// anonymous closure function to the CompFunc field (see comp.Func type).
+//
+// If a Command.CompFunc is not assigned then Command.Complete will
+// delegate to the package cmdbox.CompFunc passing it a pointer to the
+// Command. In this way the default completion behavior of all Commands
+// can be easily tested and changed, even at run time.
+//
+// This allows for dynamic tab completion possibilities that have
 // nothing to do with sub-Commands and can access program and system
-// state for their determination, all written in Go (and not bloated,
-// evaled shell).
+// state for their determination.
 //
 // The Params list is for completion as well. For things that are
 // neither Commands nor actions to be handled by Method. While this may
@@ -141,18 +147,26 @@ type Command struct {
 	License     interface{}               // released under license(s)
 	Other       map[string]interface{}    // other (custom) doc sections
 	Method      func(args []string) error // optional method, see Call()
-	Params      []string                  // params, completion only
 	CompFunc    comp.Func                 // set tab completion function
-	Commands    []string                  // subcmds/actions, see Call()
+	Commands    CommandsMap               // actions and aliases to actions, see Add()
+	Params      []string                  // params, completion only
 	Default     interface{}               // default subcmd/action
 }
 
-// New initializes a new Command and returns a pointer to it. An
-// optional list of Commands can be passed as arguments and will be
-// added with Command.Add(). The first in the list of Commands will be
-// assigned to Command.Default but can be overriden with a direct
-// assignment later. The Commands 'help' and 'version' will
-// automatically be added and need to be handled if using a Method.
+// CommandsMap contains the command names and aliases used for
+// completion pointing to the command or action name to be used.
+type CommandsMap map[string]string
+
+// String fulfills the fmt.Stringer interface to print as JSON.
+func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
+
+// New initializes a new Command and returns a pointer to it. New is
+// gauranteed to never return nil. An optional list of Commands can be
+// passed as arguments and will be added with Command.Add(). The first
+// in the list of Commands will be assigned to Command.Default but can
+// be overriden with a direct assignment later. The Commands 'help' and
+// 'version' will automatically be added and need to be handled if using
+// a Method.
 //
 //    case "help":
 //        cmdbox.Call("help",args)
@@ -168,20 +182,15 @@ type Command struct {
 //
 // If the Command does not have a Method of its own, then the list of
 // Commands is assumed to be the names of other Commands in the
-// cmdbox.Register. However, no validation is done to check that any
-// specific Command has been added to the Register. This is because
-// usually cmdbox.New() is called from init() and not all Commands may
-// yet have been registered with before any other cmdbox.New() is
-// called. Note that this means runtime testing is required to check for
-// errant calls to unregistered Commands (which otherwise produce an
-// "Unimplemented" error.
+// cmdbox.Register. However, at the time New is called no validation is
+// done to check that any specific Command has been added to the
+// Register. This is because usually cmdbox.New is called from init
+// and not all Commands may yet have been registered with before any
+// other cmdbox.New is called. Note that this means runtime testing is
+// required to check for errant calls to unregistered Commands (which
+// otherwise produce a relatively harmless "Unimplemented" error.
 //
-// Only 'help' and 'version' are allowed to be overriden by a call to
-// New("help") or New("version") in order to allow developers to
-// override these defaults and provide their own versions of these for
-// their own applications. See builtins.go.
-//
-// Otherwise, if a name conflicts with one that has already been added
+// If a name conflicts with one that has already been added
 // to the Register then an underscore (_) is appended to the name of the
 // duplicate. Later this can be renamed with cmdbox.Rename() or removed
 // with cmdbox.Remove() or changed directly by accessing it from the
@@ -191,22 +200,33 @@ type Command struct {
 // embedded Command documentation and is often the name of the command
 // module package and git repo.
 //
+// The 'help' and 'version' commands are the only ones exempt from
+// renaming and will simply be ignored (since every Command gets them
+// automatically.
+//
+// Other is initialized to an empty map to facilitate addition of
+// other sections in the help documentation.
+//
 func New(name string, a ...string) *Command {
+	defer Unlock()
+	Lock()
+
 	x := new(Command)
 	x.Name = name
-	x.Commands = []string{}
-	Lock()
+
 	if _, has := Register[name]; has && name != "help" && name != "version" {
 		name = name + "_"
 	}
 	Register[name] = x
-	Unlock()
+
 	if len(a) > 1 {
 		x.Add(a...)
 		x.Default = a[0]
 	}
 	x.Add("help", "version")
+
 	x.Other = map[string]interface{}{}
+
 	return x
 }
 
@@ -399,21 +419,26 @@ func (x *Command) Has(name string) bool {
 	return false
 }
 
-// Add adds the list of Command (or action) names passed skipping any it
-// already has.  If any name contains a bar (|) then it will be split
-// with the last item assumed to be the actual name and the first
-// elements considered aliases (all of which are added individually to
-// Commands.) See Command and Command.Run.
+var addmut = new(sync.Mutex)
+
+// Add adds the list of Command names passed. If any name contains a bar
+// (|) then it will be split with the last item assumed to be the actual
+// Command. The precending elements will be considered aliases. Note
+// this does not validate inclusion in the Register since in many cases
+// there may not yet be a Register entry, and in the case of actions
+// handled entirely by the Command itself there never will be. See
+// Command.Commands and Command.Run.
 func (x *Command) Add(names ...string) {
+	defer func() { addmut.Unlock() }()
+	addmut.Lock()
+	if x.Commands == nil {
+		x.Commands = map[string]string{}
+	}
 	for _, name := range names {
-		if strings.ContainsRune(name, '|') {
-			for _, n := range strings.Split(name, "|") {
-				x.Add(n)
-			}
-			return
-		}
-		if !x.Has(name) {
-			x.Commands = append(x.Commands, name)
+		aliases := strings.Split(name, "|")
+		name = aliases[len(aliases)-1]
+		for _, alias := range aliases {
+			x.Commands[alias] = name
 		}
 	}
 }
@@ -440,60 +465,24 @@ func (x *Command) UsageError() error {
 	return fmt.Errorf(fmt.Emphasize(strings.TrimSpace("**usage:** " + x.SprintUsage())))
 }
 
-// Complete prints the tab completion replies for the current context.
+// Complete prints the possible strings based on the current Command and
+// completion context. If the Commands CompFunc has been assigned (not
+// nil) it is called and passed a its own pointer.  If CompFunc has not
+// been assigned (is nil) then cmdbox.CompFunc is called instead. This
+// allows Command authors to control their own completion or simply use
+// the default. It also allows them to change the default by assigning
+// to the package cmdbox.CompFunc before execution.
 func (x *Command) Complete() {
-	/*
-		if x.CompFunc != nil {
-			for _, name := range x.CompFunc(line) {
-				fmt.Println(name)
-			}
-			return
-		}
-		words := strings.Split(strings.TrimSpace(line), " ")
-		if len(words) >= 2 {
-			name := words[len(words)-2]
-			complete := words[len(words)-1]
-			if x.Name != name {
-				if cmd, has := Register[name]; has {
-					line = strings.Join(words[len(words)-2:], " ")
-					cmd.Complete(line)
-				}
-				return
-			}
-			for _, cmdname := range x.Commands {
-				if cmdname == complete {
-					if cmd, has := Register[cmdname]; has {
-						line = strings.Join(words[len(words)-1:], " ")
-						cmd.Complete(line)
-					}
-					return
-				}
-				if strings.HasPrefix(cmdname, complete) {
-					fmt.Println(cmdname)
-				}
-			}
-			if x.Params != nil {
-				for _, param := range strings.Split(fmt.String(x.Params), " ") {
-					if complete != param && strings.HasPrefix(param, complete) {
-						fmt.Println(param)
-					}
-				}
-			}
-			return
-		}
-
-		// do not include hidden commands in completion
-		for _, cmdname := range x.Commands {
-			if cmdname[0] != '_' {
-				fmt.Println(cmdname)
-			}
-		}
-
-		// always include params in completion
-		for _, param := range strings.Split(fmt.String(x.Params), " ") {
-			fmt.Println(param)
-		}
-	*/
+	matches := []string{}
+	switch {
+	case x.CompFunc != nil:
+		matches = x.CompFunc(x)
+	case CompFunc != nil:
+		matches = CompFunc(x)
+	}
+	for _, m := range matches {
+		fmt.Println(m)
+	}
 }
 
 func (x *Command) Title() string {

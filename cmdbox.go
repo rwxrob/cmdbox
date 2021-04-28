@@ -7,8 +7,6 @@ dynamic documentation.
 package cmdbox
 
 import (
-	"os"
-
 	"github.com/rwxrob/cmdbox/util"
 )
 
@@ -35,16 +33,6 @@ var OmitBuiltins bool = true
 // OmitAllBuiltins prevents even the help and version builtins from
 // being included (which is useful mostly for creating example tests).
 var OmitAllBuiltins bool
-
-// Args returns a reliable collection of arguments to the executable.
-//
-// WARNING: Although the first the element of os.Args is usually the binary
-// of the compiled program executed it is never reliable and significantly
-// differs depending on operating system and method of program execution.
-// The first argument is therefore stripped completely leaving only the
-// arguments to be processed. The cmd.Args package variable can also be
-// set during testing to check cmd.Execute() behavior.
-var Args = os.Args[1:]
 
 // Main contains the main command passed to Execute to start the
 // program. While it can be changed by Subcommands it usually should not be.

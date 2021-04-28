@@ -48,8 +48,13 @@ func Line() string {
 
 // Args returns Line but as a slice of strings. If the Line() has one or
 // more spaces at the end include an space (" ") as the last item. This
-// is to distinquish between users wanting to tab on prefixes versus
-// all the possibilities for a command.
+// is to distinquish between users wanting to tab on prefixes versus all
+// the possibilities for a command.
+//
+// WARNING: The first element of any arguments list is always determined
+// by the underlying operating system and can be inconsistent and even
+// modified from the actual executable. Use caution when relying on it
+// for consistent and secure program behavior.
 func Args() []string {
 	args := []string{}
 	line := Line()

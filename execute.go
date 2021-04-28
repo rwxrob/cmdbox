@@ -1,13 +1,15 @@
 package cmdbox
 
 import (
+	"os"
+
 	"github.com/rwxrob/cmdbox/comp"
 )
 
 // Execute traps all panics, detects completion context and completes,
 // or looks up the Command pointer for name from cmdbox.Register sets
-// cmdbox.Main to it, adds the 'help' and 'version' prefabs (if they are
-// not yet added), then Calls it passing cmd.Args.  Execute is
+// cmdbox.Main to it, adds the 'help' and 'version' prefabs then Calls
+// it passing all but the first argument from os.Args. Execute is
 // gauranteed to always exit the program cleanly. See Register, Main,
 // TrapPanic().
 func Execute(name string) {
@@ -21,7 +23,7 @@ func Execute(name string) {
 		Main.Complete()
 		Exit()
 	}
-	err := command.Call(Args)
+	err := command.Call(os.Args[1:])
 	if err != nil {
 		ExitError(err)
 	}
