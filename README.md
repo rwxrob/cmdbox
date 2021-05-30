@@ -25,6 +25,9 @@ Normally you would simply `import "github.com/rwxrob/cmdbox"`.
 
 * Automatic and extendible Bash tab completion built in.
 
+* Only Commander capable of eventually doing universal tab completion on
+  *all* operating systems.
+
 * Modular, interchangeable, readable subcommands.
 
 * Easiest possible command documentation with support for emphasis with
@@ -320,6 +323,9 @@ it.
   to communicate they should use system environment variables as would
   any other two commands normally.
 
+* Naming of `cmdtab-*` module repos allows for easy discovery. Using the
+  conventional `cmd` package name (which is ignored at `init` time)
+  allows consistency for generators and cataloging.
 
 ## How Does Completion Work?
 
