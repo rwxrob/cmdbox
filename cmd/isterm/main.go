@@ -14,12 +14,12 @@ func main() {
 	}
 	if term.IsTerminal() {
 		if verbose {
-			fmt.SmartPrintln("yes")
+			fmt.PrintSmartln("yes")
 		}
 		os.Exit(0)
 	}
 	if verbose {
-		fmt.SmartPrintln("no")
+		fmt.PrintSmartln("no")
 	}
 	os.Exit(1)
 }
