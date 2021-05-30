@@ -1,9 +1,0 @@
-#!/bin/sh
-
-if isterm; then
-  echo YES this is a terminal
-  exit
-fi
-
-echo NO is not a terminal here
-
