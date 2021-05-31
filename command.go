@@ -201,8 +201,11 @@ func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 // module package and git repo.
 //
 // The 'help' and 'version' commands are the only ones exempt from
-// renaming and will simply be ignored (since every Command gets them
-// automatically.
+// renaming and will override the package defaults. Every CmdBox
+// composite program can only have one help or version command, which
+// should be able to detect its context and produce information for the
+// command provided as its first argument. For more about these see the
+// help and version subpackages.
 //
 // Other is initialized to an empty map to facilitate addition of
 // other sections in the help documentation.

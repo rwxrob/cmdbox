@@ -21,13 +21,15 @@ var executedAs = filepath.Base(os.Args[0])
 // the ExecutedAs value is inferred automatically.
 func ExecutedAs() string { return executedAs }
 
-// Execute traps all panics, detects completion context and completes,
-// or looks up the Command pointer for name from cmdbox.Register sets
-// cmdbox.Main to it, adds the 'help' and 'version' prefabs then Calls
-// it passing all but the first argument from os.Args. Execute is
-// gauranteed to always exit the program cleanly. See Register, Main,
-// TrapPanic(). If no name is passed will infer from the name of the
-// executable in multicall fashion (akin to BusyBox, see ExecutedAs).
+// Execute first determines the name of the command to be executed,
+// traps all panics, detects completion context and complete, or look up
+// the Command pointer for name from cmdbox.Register setting cmdbox.Main
+// to it. Execute is gauranteed to always exit the program cleanly. See
+// Register, Main, TrapPanic(). If no name is passed will infer from the
+// name of the executable in multicall fashion (akin to BusyBox, see
+// ExecutedAs). If the first argument after the main name is help or
+// version is it automatically swapped with the name delegated without calling
+// the Command.Method at all.
 func Execute(a ...string) {
 	defer TrapPanic()
 	var name string
@@ -35,6 +37,12 @@ func Execute(a ...string) {
 		name = a[0]
 	} else {
 		name = executedAs
+	}
+	args := os.Args[1:]
+	if len(args) > 0 && (args[0] == "version" || args[0] == "help") {
+		n := args[0]
+		args[0] = name
+		name = n
 	}
 	command, has := Register[name]
 	if !has {
@@ -45,7 +53,7 @@ func Execute(a ...string) {
 		Main.Complete()
 		Exit()
 	}
-	err := command.Call(os.Args[1:])
+	err := command.Call(args)
 	if err != nil {
 		ExitError(err)
 	}
