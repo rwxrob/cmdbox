@@ -1,4 +1,4 @@
-# 🍱 CmdBox Go Commander
+# 🍱 CmdBox Composite Commander
 
 ![WIP](https://img.shields.io/badge/status-wip-red.svg)
 [![GoDoc](https://godoc.org/github.com/rwxrob/cmdbox?status.svg)](https://godoc.org/github.com/rwxrob/cmdbox)
@@ -6,7 +6,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rwxrob/cmdbox)](https://goreportcard.com/report/github.com/rwxrob/cmdbox)
 [![Coverage](https://gocover.io/_badge/github.com/rwxrob/cmdbox)](https://gocover.io/github.com/rwxrob/cmdbox)
 
-*A commander for modern command-line human-computer interactions.*
+*A golang commander for modern command-line human-computer interactions.*
 
 *CmdBox* is a lightweight commander package focused on creating
 light-weight, self-contained, human-friendly terminal command-line
@@ -175,6 +175,19 @@ This is a summary of the design decisions made roughly in the order they
 were made. It is provided in the hopes of addressing other design
 concerns anyone reviewing this package might have before choosing to use
 it.
+
+* The `help` and `version` builtins have been converted into command
+  modules that are imported just like any other into a CmdBox composite
+  program and are no longer imported by default. This is to allow for
+  composites that are highly optimized to reduce size without giving up
+  the main advantages of the CmdBox approach. This also allows
+  composites to be made that have commands with other names for better
+  internationalized use. It also allows programs to be created that use
+  the legacy `mapopts` approach with options and dashes switches
+  instead. Such decisions should be left to the developers
+  and not forced on everyone using CmdBox. To maintain the behavior of
+  previous CmdBox versions (and CmdTab) simply import `cmdbox-help` and
+  `cmdbox-version` like any others.
 
 * A true rooted node tree of commands was discarded in favor of a flat
   map registry of internal commands despite the potential key name
