@@ -92,3 +92,15 @@ func Duplicates() map[string]*Command {
 	}
 	return m
 }
+
+// DuplicateKeys returns the same as Duplicates but only the key
+// strings. No map optimizations are performed (simple append) as this
+// is not intended for high-performance use and the number of duplicates
+// is very likely to be extremly low.
+func DuplicateKeys() []string {
+	var keys []string
+	for k, _ := range Duplicates() {
+		keys = append(keys, k)
+	}
+	return keys
+}

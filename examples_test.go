@@ -15,7 +15,21 @@ func ExampleNew_simple() {
 	// tstamp
 }
 
-func ExampleNew_twocommands() {
+func ExampleNew_duplicates() {
+	x1 := cmdbox.New("foo")
+	x2 := cmdbox.New("foo")
+	fmt.Println(x1.Name)
+	fmt.Println(x2.Name)
+	fmt.Println(len(cmdbox.Duplicates()))
+	fmt.Println(cmdbox.DuplicateKeys())
+	// Output:
+	// foo
+	// foo
+	// 1
+	// [foo_]
+}
+
+func ExampleNew_two_commands() {
 	x := cmdbox.New("pomo", "start", "stop")
 	fmt.Println(x.Commands)
 	// Output:
