@@ -34,10 +34,8 @@ func ExampleNew_two_commands() {
 	fmt.Println(x.Commands)
 	// Output:
 	// {
-	//   "help": "help",
 	//   "start": "start",
-	//   "stop": "stop",
-	//   "version": "version"
+	//   "stop": "stop"
 	// }
 }
 
@@ -81,10 +79,8 @@ func ExampleCommand_Complete_actions() {
 	// start
 	// stop
 	// stop
-	// help
 	// start
 	// stop
-	// version
 }
 
 func ExampleCommand_Complete_params() {
@@ -123,8 +119,6 @@ func ExampleCommand_Complete_params() {
 	// -v
 	// -v
 	// aparam
-	// help
 	// start
 	// stop
-	// version
 }

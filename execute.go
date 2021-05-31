@@ -22,14 +22,12 @@ var executedAs = filepath.Base(os.Args[0])
 func ExecutedAs() string { return executedAs }
 
 // Execute first determines the name of the command to be executed,
-// traps all panics, detects completion context and complete, or look up
-// the Command pointer for name from cmdbox.Register setting cmdbox.Main
-// to it. Execute is gauranteed to always exit the program cleanly. See
-// Register, Main, TrapPanic(). If no name is passed will infer from the
-// name of the executable in multicall fashion (akin to BusyBox, see
-// ExecutedAs). If the first argument after the main name is help or
-// version is it automatically swapped with the name delegated without calling
-// the Command.Method at all.
+// traps all panics, detects completion context and completes, or looks
+// up the Command pointer for name from cmdbox.Register setting
+// cmdbox.Main to it. Execute is gauranteed to always exit the program
+// cleanly. See Register, Main, TrapPanic(). If no name is passed will
+// infer from the name of the executable in multicall fashion (akin to
+// BusyBox, see ExecutedAs).
 func Execute(a ...string) {
 	defer TrapPanic()
 	var name string
@@ -38,36 +36,18 @@ func Execute(a ...string) {
 	} else {
 		name = executedAs
 	}
-	args := os.Args[1:]
-	if len(args) > 0 && (args[0] == "version" || args[0] == "help") {
-		n := args[0]
-		args[0] = name
-		name = n
-	}
-	command, has := Register[name]
+	x, has := Register[name]
 	if !has {
 		ExitUnimplemented(name)
 	}
-	Main = command
+	Main = x
 	if comp.Yes() {
 		Main.Complete()
 		Exit()
 	}
-	err := command.Call(args)
+	err := Call(name, os.Args[1:], nil)
 	if err != nil {
 		ExitError(err)
 	}
 	Exit()
-}
-
-// Call allows any Command in the Register to be called directly by
-// name. Avoid abusing this method since it creates very tight coupling
-// dependencies between Commands.
-func Call(name string, args []string) error {
-	defer TrapPanic()
-	command, has := Register[name]
-	if !has {
-		return Unimplemented(name)
-	}
-	return command.Call(args)
 }

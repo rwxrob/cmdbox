@@ -147,6 +147,7 @@ type Command struct {
 	License     interface{}               // released under license(s)
 	Other       map[string]interface{}    // other (custom) doc sections
 	Method      func(args []string) error // optional method, see Call()
+	Caller      *Command                  // last caller, see Call()
 	CompFunc    comp.Func                 // set tab completion function
 	Commands    CommandsMap               // actions and aliases to actions, see Add()
 	Params      []string                  // params, completion only
@@ -164,14 +165,7 @@ func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 // gauranteed to never return nil. An optional list of Commands can be
 // passed as arguments and will be added with Command.Add(). The first
 // in the list of Commands will be assigned to Command.Default but can
-// be overriden with a direct assignment later. The Commands 'help' and
-// 'version' will automatically be added and need to be handled if using
-// a Method.
-//
-//    case "help":
-//        cmdbox.Call("help",args)
-//    case "version":
-//        cmdbox.Call("version",args)
+// be overriden with a direct assignment later.
 //
 // If a Command has a Method, then the Commands are interpreted as
 // keywords for actions to be handled within that Command.Method
@@ -200,13 +194,6 @@ func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 // embedded Command documentation and is often the name of the command
 // module package and git repo.
 //
-// The 'help' and 'version' commands are the only ones exempt from
-// renaming and will override the package defaults. Every CmdBox
-// composite program can only have one help or version command, which
-// should be able to detect its context and produce information for the
-// command provided as its first argument. For more about these see the
-// help and version subpackages.
-//
 // Other is initialized to an empty map to facilitate addition of
 // other sections in the help documentation.
 //
@@ -217,7 +204,7 @@ func New(name string, a ...string) *Command {
 	x := new(Command)
 	x.Name = name
 
-	if _, has := Register[name]; has && name != "help" && name != "version" {
+	if _, has := Register[name]; has {
 		name = name + "_"
 	}
 	Register[name] = x
@@ -226,7 +213,6 @@ func New(name string, a ...string) *Command {
 		x.Add(a...)
 		x.Default = a[0]
 	}
-	x.Add("help", "version")
 
 	x.Other = map[string]interface{}{}
 
@@ -496,41 +482,6 @@ func (x *Command) Title() string {
 		return x.Name + " - " + summary
 	}
 	return x.Name
-}
-
-// Call invokes Method if it has one, or assumes first argument is
-// from Commands and attempts to delegate to it. If that fails,
-// assumes arguments are meant for the Default Command. Otherwise,
-// returns a UsageError.
-func (x *Command) Call(args []string) error {
-
-	// if has own method assume it can handle itself and args
-	if x.Method != nil {
-		return x.Method(args)
-	}
-
-	// if no method and no args try default
-	if args == nil || len(args) == 0 {
-		if x.Default != nil {
-			return Call(fmt.String(x.Default), args)
-		}
-		return fmt.Errorf("empty Call() arguments with no Default subcommand")
-	}
-
-	// if first arg is in list of subcommands call it
-	first := args[0]
-	for _, name := range x.Commands {
-		if name == first {
-			return Call(name, args[1:])
-		}
-	}
-
-	// assume arguments are for default
-	if len(args) > 0 && x.Default != nil {
-		return Call(fmt.String(x.Default), args)
-	}
-
-	return x.UsageError()
 }
 
 // Unimplemented calls Unimplemented passing the name of the command.
