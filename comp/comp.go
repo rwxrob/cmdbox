@@ -12,7 +12,7 @@ import (
 
 // This can be set to force a completion context no matter what the
 // shell or situation. This is useful mostly for testing and should
-// usually never be modified by any Command of subcommand, which can
+// usually never be modified by any Command or subcommand, which can
 // create very unpredictable results for the completions of other
 // Commands. (And, as a reminder, always vet any CmdBox command modules
 // you import to be sure they do not do insecure things with the cmdbox

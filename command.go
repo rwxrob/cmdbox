@@ -233,8 +233,10 @@ func New(name string, a ...string) *Command {
 // Hidden returns true if the command name begins with underscore ('_').
 func (x *Command) Hidden() bool { return x.Name[0] == '_' }
 
-// TODO clean me or remove
-func (x *Command) vsubcommands() []*Command {
+// VisibleCommands returns an array of visual Commands (not beginning
+// with underscore). These are used in usage and descriptions and do not
+// include any command aliases.
+func (x *Command) VisibleCommands() []*Command {
 	cmds := []*Command{}
 	for _, name := range x.Commands {
 		if name[0] == '_' {
@@ -263,7 +265,7 @@ func (x *Command) SprintUsage() string {
 		buf += "**" + name + "** " +
 			strings.TrimSpace(fmt.String(x.Usage)) + "\n"
 	}
-	for _, subcmd := range x.vsubcommands() {
+	for _, subcmd := range x.VisibleCommands() {
 		buf += "**" + name + "** " + subcmd.SprintUsage()
 	}
 	if len(buf) > 0 {
@@ -278,7 +280,7 @@ func (x *Command) SprintUsage() string {
 // builtin help.
 func (x *Command) SprintCommandSummaries() string {
 	buf := ""
-	for _, subcmd := range x.vsubcommands() {
+	for _, subcmd := range x.VisibleCommands() {
 		buf += _fmt.Sprintf(
 			"%-14v %v\n",
 			"**"+subcmd.Name+"**",
