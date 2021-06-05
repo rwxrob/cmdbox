@@ -204,12 +204,13 @@ func New(name string, a ...string) *Command {
 	x := new(Command)
 	x.Name = name
 
+	fmt.Println(x)
 	if _, has := Register[name]; has {
 		name = name + "_"
 	}
 	Register[name] = x
 
-	if len(a) > 1 {
+	if len(a) > 0 {
 		x.Add(a...)
 		x.Default = a[0]
 	}
