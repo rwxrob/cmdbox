@@ -204,7 +204,6 @@ func New(name string, a ...string) *Command {
 	x := new(Command)
 	x.Name = name
 
-	fmt.Println(x)
 	if _, has := Register[name]; has {
 		name = name + "_"
 	}
