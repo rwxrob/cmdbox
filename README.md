@@ -279,16 +279,6 @@ it.
 * Use of aliases (`d|del|delete`) allows accessibility even if tab
   completion is not (yet) supported on a particular platform.
 
-* Inferring the main (top-level) command to use was considered to be the
-  first argument (`os.Args[0]`) for some time but further research
-  revealed it can never be relied upon fully. It also initially seemed
-  clever to change the behavior of an executable simply by changing its
-  name but this was quickly dismissed when clearer thinking prevailed
-  concerning this and other security concerns. Therefore, the first
-  command must be passed as an argument to `cmdbox.Execute("mytopcmd")`. It
-  is simple enough, however, to compile other executables with different
-  main commands. Indeed, only the argument to need change to do so.
-
 * Rather than add the complication of wrapping lines in a block and
   indenting the proper number of spaces for a given terminal width
   (which could be resized), the choice to keep all blocks beginning from
@@ -345,6 +335,11 @@ it.
 * Naming of `cmdtab-*` module repos allows for easy discovery. Using the
   conventional `cmd` package name (which is ignored at `init` time)
   allows consistency for generators and cataloging.
+
+* Use of `interface{}` instead of `string` types is to provide dynamic
+  hooks into these values that can be evaluated at run time allowing
+  them to examine the environment and context and return those as values
+  when wanted.
 
 ## How Does Completion Work?
 
