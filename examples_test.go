@@ -122,3 +122,18 @@ func ExampleCommand_Complete_params() {
 	// start
 	// stop
 }
+
+func ExampleCommand_NameFromSig() {
+	sig := "d|uncode|decode"
+	fmt.Println(cmdbox.NameFromSig(sig))
+	sig = "d|decode"
+	fmt.Println(cmdbox.NameFromSig(sig))
+	sig = "decode"
+	fmt.Println(cmdbox.NameFromSig(sig))
+	sig = ""
+	fmt.Println(cmdbox.NameFromSig(sig))
+	// Output:
+	// decode
+	// decode
+	// decode
+}

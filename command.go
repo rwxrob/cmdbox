@@ -211,7 +211,7 @@ func New(name string, a ...string) *Command {
 
 	if len(a) > 0 {
 		x.Add(a...)
-		x.Default = a[0]
+		x.Default = NameFromSig(a[0])
 	}
 
 	x.Other = map[string]interface{}{}
@@ -412,20 +412,25 @@ func (x *Command) Has(name string) bool {
 
 var addmut = new(sync.Mutex)
 
-// Add adds the list of Command names passed. If any name contains a bar
-// (|) then it will be split with the last item assumed to be the actual
-// Command. The precending elements will be considered aliases. Note
-// this does not validate inclusion in the Register since in many cases
-// there may not yet be a Register entry, and in the case of actions
-// handled entirely by the Command itself there never will be. See
-// Command.Commands and Command.Run.
-func (x *Command) Add(names ...string) {
+// Add adds the list of Command signatures passed. A command signature
+// consists of one or more aliases separated by a bar (|) with the final
+// word being the name of the actual Command.  Aliases are a useful way
+// to provide shortcuts when tab completion is not available and should
+// generally be considered for every Command. Single letter aliases are
+// common and encouraged.
+//
+// Note that Add does not validate inclusion in the Register since in
+// many cases there may not yet be a Register entry, and in the case of
+// actions handled entirely by the Command itself there never will be.
+// See Command.Commands and Command.Run.
+//
+func (x *Command) Add(sigs ...string) {
 	defer func() { addmut.Unlock() }()
 	addmut.Lock()
 	if x.Commands == nil {
 		x.Commands = map[string]string{}
 	}
-	for _, name := range names {
+	for _, name := range sigs {
 		aliases := strings.Split(name, "|")
 		name = aliases[len(aliases)-1]
 		for _, alias := range aliases {
@@ -488,3 +493,10 @@ func (x *Command) Title() string {
 // Useful for temporarily notifying users of commands in beta that
 // something has not yet been implemented.
 func (x *Command) Unimplemented() error { return Unimplemented(x.Name) }
+
+// NameFromSig returns the name from a Command signature. See
+// Command.New.
+func NameFromSig(sig string) string {
+	all := strings.Split(sig, "|")
+	return all[len(all)-1]
+}
