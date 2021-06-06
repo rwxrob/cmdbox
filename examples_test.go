@@ -137,3 +137,31 @@ func ExampleCommand_NameFromSig() {
 	// decode
 	// decode
 }
+
+func ExampleString() {
+	x := cmdbox.New("foo")
+	x.Author = "Rob"
+	fmt.Println(cmdbox.String())
+	// Output:
+	// {
+	//   "foo": {
+	//     "Author": "Rob",
+	//     "Name": "foo",
+	//     "Summary": ""
+	//   }
+	// }
+}
+
+func ExamplePrint() {
+	x := cmdbox.New("foo")
+	x.Author = "Rob"
+	cmdbox.Print()
+	// Output:
+	// {
+	//   "foo": {
+	//     "Author": "Rob",
+	//     "Name": "foo",
+	//     "Summary": ""
+	//   }
+	// }
+}

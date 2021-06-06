@@ -133,7 +133,6 @@ import (
 //
 type Command struct {
 	Name        string                    // <= 14 recommended
-	As          string                    // only set if renamed
 	Summary     interface{}               // > 65 truncated
 	Version     interface{}               // semantic version (v0.1.3)
 	Usage       interface{}               // following docopt syntax
@@ -161,52 +160,91 @@ type CommandsMap map[string]string
 // String fulfills the fmt.Stringer interface to print as JSON.
 func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 
-// New initializes a new Command and returns a pointer to it. New is
-// gauranteed to never return nil. An optional list of Commands can be
-// passed as arguments and will be added with Command.Add(). The first
-// in the list of Commands will be assigned to Command.Default but can
-// be overriden with a direct assignment later.
+// New initializes a new Command and returns a pointer to it (assigned
+// to 'x' by convention) allowing further initialization through direct
+// assignments (ex: x = ...) thereafter within the init() function. By
+// convention only one init() function with a single New call is allowed
+// per file to maintain command modularity:
 //
-// If a Command has a Method, then the Commands are interpreted as
-// keywords for actions to be handled within that Command.Method
-// (usually within a switch/case block). The Method may still
-// cmdbox.Call() to delegate to other other Commands in the
+//     package mycmd
+//
+//     import "github.com/rwxrob/cmdbox"
+//
+//     func init() {
+//         x := New("foo","subcmd")
+//         x.Summary = `foo is a thing`
+//         // ...
+//     }
+//
+// See the package testable example for more.
+//
+// Up to three command names may be passed with a single space between
+// them to avoid collisions and facilitate default tab command
+// completion. The last item is always taken as the Command.Name.
+//
+//         x := New("foo bar help")
+//         x.Summary = `output help information for foo`
+//
+// An optional list or arguments can be passed and each will be directly
+// passed to Command.Add(). The first in the list of Commands will be
+// assigned to Command.Default but can be overridden with a direct
+// assignment later.
+//
+//         x := New("foo", "help")
+//         // x.Default == "help"
+//
+// Each in the list of Commands may be in signature form (rather than
+// just a name) meaning it may have one or more command aliases prefixed
+// and bar-delimited which are added to the Command.Commands map:
+//
+//         x := New("foo", "h|help")
+//         // x.Default == "help"
+//         // x.Commands == {"h":"help","help":"help"}
+//
+// All but top-level Commands will usually assign a Command.Method to
+// handle the work of the Command. By convention the arguments should be
+// named "args" and no name given to the error returned:
+//
+//         x.Method = func(args []string) error {
+//             fmt.Println("would do something")
+//             return nil
+//         }
+//
+// If a Command has a Method, then the Commands passed as a list to New
+// are interpreted as keywords for actions to be handled within that
+// Command.Method (usually within a switch/case block). The Method may
+// still cmdbox.Call() to delegate to other other Commands in the
 // cmdbox.Register (but avoid unnecessary coupling between Commands when
-// possible).
+// possible). (See Call for more.)
 //
 // If the Command does not have a Method of its own, then the list of
-// Commands is assumed to be the names of other Commands in the
-// cmdbox.Register. However, at the time New is called no validation is
-// done to check that any specific Command has been added to the
-// Register. This is because usually cmdbox.New is called from init
-// and not all Commands may yet have been registered with before any
-// other cmdbox.New is called. Note that this means runtime testing is
-// required to check for errant calls to unregistered Commands (which
-// otherwise produce a relatively harmless "Unimplemented" error.
+// arguments passed to New is assumed to be the signatures for other
+// Commands in the cmdbox.Register.
 //
-// If a name conflicts with one that has already been added
-// to the Register then an underscore (_) is appended to the name of the
-// duplicate. Later this can be renamed with cmdbox.Rename() or removed
-// with cmdbox.Remove() or changed directly by accessing it from the
-// cmdbox.Register. If the Register key is changed do not forget to set
-// the Command.As field as well to match. The original Name should
-// really never be changed since it is referred to throughout the
-// embedded Command documentation and is often the name of the command
-// module package and git repo.
+// A Command signature may also include an explicit parent command for
+// disambiguation (ex: "foo h|help"). Usually this is not needed since
+// New automatically adds the name of the current command when first
+// checking the Register (try cmdbox.Register.Print() to see) and only
+// after no such qualified name/key is found will look for unqualified
+// (global) entries.
 //
-// Other is initialized to an empty map to facilitate addition of
-// other sections in the help documentation.
+// Note that New does no validation of any potential command in the
+// Register because the state of the Register cannot be predicted at
+// init() time. Not all Commands may yet have been registered before any
+// other cmdbox.New is called. This means runtime testing is required to
+// check for errant calls to unregistered Commands (which otherwise
+// produce a relatively harmless "Unimplemented" error.)
+//
+// The New function is guaranteed to never return nil.
 //
 func New(name string, a ...string) *Command {
 	defer Unlock()
 	Lock()
 
+	// TODO detect single spaces in the name
+
 	x := new(Command)
 	x.Name = name
-
-	if _, has := Register[name]; has {
-		name = name + "_"
-	}
 	Register[name] = x
 
 	if len(a) > 0 {
@@ -247,9 +285,6 @@ func (x *Command) VisibleCommands() []*Command {
 func (x *Command) SprintUsage() string {
 	buf := ""
 	name := x.Name
-	if len(x.As) > 0 {
-		name = x.As
-	}
 	if x.Usage != nil {
 		buf += "**" + name + "** " +
 			strings.TrimSpace(fmt.String(x.Usage)) + "\n"
@@ -292,8 +327,6 @@ func (x Command) MarshalJSON() ([]byte, error) {
 
 	// check for empties before commiting
 	var buf string
-
-	s["As"] = x.As
 
 	if x.Summary != "" {
 		s["Summary"] = strings.TrimSpace(fmt.String(x.Summary))
