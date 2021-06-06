@@ -189,11 +189,17 @@ it.
   previous CmdBox versions (and CmdTab) simply import `cmdbox-help` and
   `cmdbox-version` like any others.
 
-* A true rooted node tree of commands was discarded in favor of a flat
-  map registry of internal commands despite the potential key name
-  conflicts due to the unnecessary complication it incurred upon the
-  otherwise light, clear, and intuitive command creation and declaration
-  syntax with `cmdbox.New()`.
+* A true rooted node tree of commands (creating essentially a grammar
+  for every composite command) was discarded in favor of a flat map
+  registry of internal commands despite the potential key name conflicts
+  due to the unnecessary complication it incurred upon the otherwise
+  light, clear, and intuitive command creation and declaration syntax
+  with `cmdbox.New()`. For every composite monolith there is a
+  first-level set of commands, which are also recognized through
+  multicall binaries (like BusyBox). Every first-level command may have
+  one or more commands of its own. But that is the extent of command
+  depth. Everything after that is considered arguments to one of the
+  first or second or third level commands.
 
 * To this day, command options plague developers and users by different
   ways of dealing with single or double dashes, the equals sign, single
