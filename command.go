@@ -161,8 +161,8 @@ type CommandsMap map[string]string
 func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 
 // New initializes a new Command and returns a pointer to it (assigned
-// to 'x' by convention) allowing further initialization through direct
-// assignments (ex: x = ...) thereafter within the init() function. By
+// to 'x' by convention). Further initialization can be done with direct
+// assignments to fields of x from within the init() function. By
 // convention only one init() function with a single New call is allowed
 // per file to maintain command modularity:
 //
@@ -176,30 +176,58 @@ func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 //         // ...
 //     }
 //
-// See the package testable example for more.
+// First Argument is Command Name
 //
-// Up to three command names may be passed with a single space between
-// them to avoid collisions and facilitate default tab command
-// completion. The last item is always taken as the Command.Name.
+// The first argument is *always* the main Command.Name by which it will
+// be called.  This uniquely identifies the Command and becomes the key
+// used by Call to lookup the Command from the Register for completion
+// and execution.  By convention, these must be speakable, complete
+// words with absolutely no punctuation whatsoever. (For performance
+// reasons, no validation is performed on the Name.)
 //
-//         x := New("foo bar help")
+// The Command.Name may contain two complete words separated by
+// a single space. This is to avoid collisions and facilitate default tab
+// completion. It also removes indirection when called from Execute.
+//
+//         x := New("foo help")
 //         x.Summary = `output help information for foo`
 //
-// An optional list or arguments can be passed and each will be directly
-// passed to Command.Add(). The first in the list of Commands will be
-// assigned to Command.Default but can be overridden with a direct
-// assignment later.
+// Using two-word names is common when packaging subcommands with
+// commands in such a way as to disambiguate which subcommand is wanted
+// -- particularly when common words are used.
+//
+//         x := New("foo help")
+//         x := New("bar help")
+//
+// (Note, however, that the default cmdbox-help package is able to detect
+// the command for which help is needed through the caller passed to
+// Call. This example assumes wanting to override that, if used.)
+//
+// Remaining Arguments are Subcommands
+//
+// Any variadic arguments that follow will be directly passed to
+// Command.Add(). This provides a succint summary of how the command may
+// be called. The first in the list will be assigned to Command.Default,
+// but can be overridden with a direct assignment later.
 //
 //         x := New("foo", "help")
 //         // x.Default == "help"
 //
-// Each in the list of Commands may be in signature form (rather than
-// just a name) meaning it may have one or more command aliases prefixed
-// and bar-delimited which are added to the Command.Commands map:
+// Each argument passed in the list may be in signature form (rather than
+// just a name) meaning it may have one or more aliases prefixed
+// and bar-delimited which are added to the Commands map:
 //
 //         x := New("foo", "h|help")
 //         // x.Default == "help"
 //         // x.Commands == {"h":"help","help":"help"}
+//
+// When the Command is called by Call the Commands map is used to
+// delegate the call to a matching Command in the Register if and only
+// if the Command itself does not have a Command.Method defined. See
+// Call for more about this delegation on how it finds key name matches
+// in the Register.
+//
+// Command Method Has Priority
 //
 // All but top-level Commands will usually assign a Command.Method to
 // handle the work of the Command. By convention the arguments should be
@@ -210,23 +238,20 @@ func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 //             return nil
 //         }
 //
-// If a Command has a Method, then the Commands passed as a list to New
-// are interpreted as keywords for actions to be handled within that
-// Command.Method (usually within a switch/case block). The Method may
-// still cmdbox.Call() to delegate to other other Commands in the
-// cmdbox.Register (but avoid unnecessary coupling between Commands when
-// possible). (See Call for more.)
+// If a Command has a Method, then Call will pass all arguments as-is
+// allowing the Method to decide if they just arguments or keywords
+// for actions to be handled within that Command.Method (usually within
+// a switch/case block). The Method may still cmdbox.Call() to delegate
+// to other other Commands in the cmdbox.Register (but avoid unnecessary
+// coupling between Commands when possible. See Call for more.)
+//
+// No Command Method Will Delegate
 //
 // If the Command does not have a Method of its own, then the list of
 // arguments passed to New is assumed to be the signatures for other
-// Commands in the cmdbox.Register.
-//
-// A Command signature may also include an explicit parent command for
-// disambiguation (ex: "foo h|help"). Usually this is not needed since
-// New automatically adds the name of the current command when first
-// checking the Register (try cmdbox.Register.Print() to see) and only
-// after no such qualified name/key is found will look for unqualified
-// (global) entries.
+// Commands in the cmdbox.Register that must eventually be populated by
+// other Command init() functions including subcommands of the given
+// Command.
 //
 // Note that New does no validation of any potential command in the
 // Register because the state of the Register cannot be predicted at
@@ -240,8 +265,6 @@ func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 func New(name string, a ...string) *Command {
 	defer Unlock()
 	Lock()
-
-	// TODO detect single spaces in the name
 
 	x := new(Command)
 	x.Name = name
@@ -446,11 +469,11 @@ func (x *Command) Has(name string) bool {
 var addmut = new(sync.Mutex)
 
 // Add adds the list of Command signatures passed. A command signature
-// consists of one or more aliases separated by a bar (|) with the final
-// word being the name of the actual Command.  Aliases are a useful way
-// to provide shortcuts when tab completion is not available and should
-// generally be considered for every Command. Single letter aliases are
-// common and encouraged.
+// consists of one or more more aliases separated by a bar (|) with the
+// final word being the name of the actual Command.  Aliases are
+// a useful way to provide shortcuts when tab completion is not
+// available and should generally be considered for every Command.
+// Single letter aliases are common and encouraged.
 //
 // Note that Add does not validate inclusion in the Register since in
 // many cases there may not yet be a Register entry, and in the case of
@@ -463,9 +486,10 @@ func (x *Command) Add(sigs ...string) {
 	if x.Commands == nil {
 		x.Commands = map[string]string{}
 	}
-	for _, name := range sigs {
-		aliases := strings.Split(name, "|")
-		name = aliases[len(aliases)-1]
+	for _, sig := range sigs {
+		aliases := strings.Split(sig, "|")
+		name := aliases[len(aliases)-1]
+		x.Commands[name] = name
 		for _, alias := range aliases {
 			x.Commands[alias] = name
 		}
@@ -528,7 +552,8 @@ func (x *Command) Title() string {
 func (x *Command) Unimplemented() error { return Unimplemented(x.Name) }
 
 // NameFromSig returns the name from a Command signature. See
-// Command.New.
+// Command.New. This splits off any prefixed, bar-delimited aliases
+// ("h|help" -> "help").
 func NameFromSig(sig string) string {
 	all := strings.Split(sig, "|")
 	return all[len(all)-1]
