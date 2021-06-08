@@ -45,7 +45,7 @@ func Execute(a ...string) {
 		Main.Complete()
 		Exit()
 	}
-	err := Call(name, os.Args[1:], nil)
+	err := Call(nil, name, os.Args[1:])
 	if err != nil {
 		ExitError(err)
 	}

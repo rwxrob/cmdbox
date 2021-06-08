@@ -1,55 +1,64 @@
 package cmdbox
 
-import "github.com/rwxrob/cmdbox/fmt"
+import (
+	"strings"
+
+	"github.com/rwxrob/cmdbox/fmt"
+)
 
 // Call allows any Command in the Register to be called directly by
-// name. Avoid abusing this method since it creates very tight coupling
-// dependencies between Commands. The key parameter must be the key name
-// of an existing Command in the Register. The caller points to the
-// Command that is doing the calling. If the key name is not found an
-// Unimplemented error will be returned. By convention, passing a nil
-// as the caller indicates the Command was called from something besides
+// name. If the caller is not nil and the name does not already have
+// a space in it then the caller.Name+" "+name will first be
+// tried before just the name as is. By convention, passing a nil as the
+// caller indicates the Command was called from something besides
 // another Command, usually the cmdbox package itself.
 //
-// Call uses the following algorithm to determine what to run:
+// Delegation resolves as follows (for x as *Command):
 //
-// 1. If a Command.Method is found, run and return
-// 2. If first argument in Command.Commands, run and return
-// 3. If Command.Default assume arguments are for it, run and return
-// 4. Return a UsageError
+//     1. If x.Method is not nil, delegate to it:
+//            return x.Method(args)
+//     2. If first arg in x.Commands, shift args and delegate:
+//            return Call(caller, x.Name+" "+first, args[1:])
+//     3. If x.Default, assume all args intended for default:
+//            return Call(caller,x.Name+" "+x.Default,args)
+//     4. Return x.UsageError
 //
-func Call(key string, args []string, caller *Command) error {
+// Note the recursive call to Call itself does not change the original
+// caller. (By design, there is no implementation of call stack tracking
+// of any kind.)
+//
+func Call(caller *Command, name string, args []string) error {
 	defer TrapPanic()
-	x, has := Register[key]
-	if !has {
-		return Unimplemented(key)
+
+	// most common case
+	x, has := Register[name]
+
+	if caller != nil && !strings.ContainsRune(name, ' ') {
+		x, has = Register[caller.Name+" "+name]
 	}
+
+	if !has {
+		return Unimplemented(name)
+	}
+
 	x.Caller = caller
 
-	// if has own method assume it can handle itself and args
 	if x.Method != nil {
 		return x.Method(args)
 	}
 
-	// if no method and no args try default
-	if args == nil || len(args) == 0 {
-		if x.Default != nil {
-			return Call(fmt.String(x.Default), args, caller)
-		}
-		return fmt.Errorf("empty Call() arguments with no Command.Default")
-	}
-
-	// if first arg is in list of Commands call it
-	first := args[0]
-	for _, name := range x.Commands {
-		if name == first {
-			return Call(name, args[1:], caller)
+	// if first arg is in map of Commands call it
+	if len(args) > 0 {
+		first := args[0]
+		for k, name := range x.Commands {
+			if k == first {
+				return Call(caller, name, args[1:])
+			}
 		}
 	}
 
-	// assume arguments are for default
-	if len(args) > 0 && x.Default != nil {
-		return Call(fmt.String(x.Default), args, caller)
+	if x.Default != nil {
+		return Call(caller, fmt.String(x.Default), args)
 	}
 
 	return x.UsageError()
