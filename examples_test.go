@@ -18,15 +18,18 @@ func ExampleNew_simple() {
 func ExampleNew_duplicates() {
 	x1 := cmdbox.New("foo")
 	x2 := cmdbox.New("foo")
+	x3 := cmdbox.New("foo")
 	fmt.Println(x1.Name)
 	fmt.Println(x2.Name)
+	fmt.Println(x3.Name)
 	fmt.Println(len(cmdbox.Duplicates()))
 	fmt.Println(cmdbox.DuplicateKeys())
 	// Output:
 	// foo
-	// foo
-	// 1
-	// [foo_]
+	// foo_
+	// foo__
+	// 2
+	// [foo_ foo__]
 }
 
 func ExampleNew_two_commands() {
@@ -124,7 +127,9 @@ func ExampleCommand_Complete_params() {
 }
 
 func ExampleCommand_NameFromSig() {
-	sig := "d|uncode|decode"
+	sig := "foo d|uncode|decode"
+	fmt.Println(cmdbox.NameFromSig(sig))
+	sig = "d|uncode|decode"
 	fmt.Println(cmdbox.NameFromSig(sig))
 	sig = "d|decode"
 	fmt.Println(cmdbox.NameFromSig(sig))
@@ -136,32 +141,41 @@ func ExampleCommand_NameFromSig() {
 	// decode
 	// decode
 	// decode
+	// decode
 }
 
 func ExampleString() {
+	cmdbox.Init()
 	x := cmdbox.New("foo")
 	x.Author = "Rob"
 	fmt.Println(cmdbox.String())
 	// Output:
 	// {
-	//   "foo": {
-	//     "Author": "Rob",
-	//     "Name": "foo",
-	//     "Summary": ""
+	//   "PackageVersion": "",
+	//   "Register": {
+	//     "foo": {
+	//       "Author": "Rob",
+	//       "Name": "foo",
+	//       "Summary": ""
+	//     }
 	//   }
 	// }
 }
 
 func ExamplePrint() {
+	cmdbox.Init()
 	x := cmdbox.New("foo")
 	x.Author = "Rob"
 	cmdbox.Print()
 	// Output:
 	// {
-	//   "foo": {
-	//     "Author": "Rob",
-	//     "Name": "foo",
-	//     "Summary": ""
+	//   "PackageVersion": "",
+	//   "Register": {
+	//     "foo": {
+	//       "Author": "Rob",
+	//       "Name": "foo",
+	//       "Summary": ""
+	//     }
 	//   }
 	// }
 }

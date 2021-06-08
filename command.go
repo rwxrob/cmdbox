@@ -161,7 +161,8 @@ type CommandsMap map[string]string
 func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 
 // New initializes a new Command and returns a pointer to it (assigned
-// to 'x' by convention). Further initialization can be done with direct
+// to 'x' by convention).  The New function is guaranteed to never
+// return nil. Further initialization can be done with direct
 // assignments to fields of x from within the init() function. By
 // convention only one init() function with a single New call is allowed
 // per file to maintain command modularity:
@@ -260,11 +261,29 @@ func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 // check for errant calls to unregistered Commands (which otherwise
 // produce a relatively harmless "Unimplemented" error.)
 //
-// The New function is guaranteed to never return nil.
+// Duplicate Names Append Underscore
+//
+// Although every convenience has been designed to avoid naming
+// conflicts when importing Commands into the Register duplicates are
+// still a possibility. Rather than override those previously added any
+// identical duplicate will simply have an underscore added to the name.
+// Since the processing of init functions is gauranteed to happen in
+// the same order for any given composition this allows rare naming
+// conflicts to be resolved in the main init before calling Execute when
+// needed.
 //
 func New(name string, a ...string) *Command {
 	defer Unlock()
 	Lock()
+
+	// keep adding _ until not found
+	for {
+		_, has := Register[name]
+		if !has {
+			break
+		}
+		name = name + "_"
+	}
 
 	x := new(Command)
 	x.Name = name

@@ -48,7 +48,9 @@ var Main *Command
 func JSON() string {
 	s := make(map[string]interface{})
 	s["PackageVersion"] = Version
-	s["Main"] = Main.Name
+	if Main != nil {
+		s["Main"] = Main.Name
+	}
 	s["Register"] = Register
 	return util.ConvertToJSON(s)
 }
@@ -58,3 +60,7 @@ func String() string { return JSON() }
 
 // Print is shortcut for fmt.Println(cmdbox.String()).
 func Print() { fmt.Println(String()) }
+
+// Init resets the internal Register as if no CmdBox Command init
+// function had been called. Package metadata is preserved.
+func Init() { Register = map[string]*Command{} }
