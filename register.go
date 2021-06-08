@@ -2,9 +2,6 @@ package cmdbox
 
 import (
 	"sync"
-
-	"github.com/rwxrob/cmdbox/fmt"
-	"github.com/rwxrob/cmdbox/util"
 )
 
 // Register is a map of Command pointers each keyed to the Name of the
@@ -22,12 +19,6 @@ import (
 // was detected and added during New(). See Duplicates(), Rename() and
 // Remove().
 var Register = map[string]*Command{}
-
-// String returns the Register as a JSON string.
-func String() string { return util.ConvertToJSON(Register) }
-
-// Print is shortcut for fmt.Println(cmdbox.String()).
-func Print() { fmt.Println(String()) }
 
 var mutex = new(sync.Mutex)
 

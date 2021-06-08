@@ -7,6 +7,7 @@ dynamic documentation.
 package cmdbox
 
 import (
+	"github.com/rwxrob/cmdbox/fmt"
 	"github.com/rwxrob/cmdbox/util"
 )
 
@@ -51,3 +52,9 @@ func JSON() string {
 	s["Register"] = Register
 	return util.ConvertToJSON(s)
 }
+
+// String returns Package metadata and Register as a JSON string.
+func String() string { return JSON() }
+
+// Print is shortcut for fmt.Println(cmdbox.String()).
+func Print() { fmt.Println(String()) }
