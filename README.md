@@ -176,24 +176,21 @@ project (in no particular order). It is provided in the hopes of
 addressing other design concerns anyone reviewing this package might
 have before choosing to use it.
 
-* Dashes are dumb. The world has suffered enough from moronic design
-  decisions originating from `getopts` long enough. Beginning *anything*
-  but negative numbers with dashes on the command line has *always* been
-  an HCI UX anti-pattern. There is not a single justifiable case in history
-  where using dashes to identify options was *actually* required. In
-  every case, a more intelligent, human approach to the grammar of the
-  command and its arguments would have prevented all of us from fumbling
-  through decades of this absolutely horrid design. Therefore, in the
-  CmdBox world "thou shalt not use dashes, ever" is the law and breaking
-  it a cardinal sin --- whether command/action names or arguments (that
-  don't have a legitimate need for dashes in them). As Unicode has
-  standardized and become supported in all terminals, and subcommand
-  composite monoliths and conversational interfaces emerge it is well
-  past time to use *actual* human language for the best possible
-  human-command-line user experience, not some monstrous, impossible to
-  remember, command-line pseudo-language not even the computer
-  likes or wants. Each command has a language (or at least a grammar)
-  and its time we started treating them like it.
+* Dashes are dumb. The world has suffered enough from dubious design
+  decisions made decades ago in the `getops` world when string sizes
+  were limited and usernames no more than eight characters. Beginning
+  anything but negative numbers with dashes on the command line has
+  *always* been an HCI UX anti-pattern that we tolerated when we had to,
+  expanded on when we could (with "long" options), and can now sluff off
+  completely and gratefully. As Unicode has standardized, and subcommand
+  composite monoliths and conversational interfaces have emerged, it is
+  now more than obvious that each command brings with it a full language
+  grammar specification. Isn't it time we started treating them as such?
+  Not only will our code and command lines be more readable but more
+  accessible as well allowing the command line interface to extend to
+  chat services and conversational assistants. Until then we are trapped
+  in a prison of unnecessary dashes and obfuscated, esoteric
+  parameters.
 
 * The `help` and `version` builtins have been converted into command
   modules that are imported just like any other into a CmdBox composite
