@@ -64,3 +64,6 @@ func Print() { fmt.Println(String()) }
 // Init resets the internal Register as if no CmdBox Command init
 // function had been called. Package metadata is preserved.
 func Init() { Register = map[string]*Command{} }
+
+// Has returns true if Register has an entry that matches the key.
+func Has(key string) bool { _, has := Register[key]; return has }

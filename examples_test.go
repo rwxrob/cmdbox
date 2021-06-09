@@ -16,6 +16,29 @@ func ExampleNew_simple() {
 	// tstamp
 }
 
+func ExampleHas() {
+	cmdbox.Init()
+	cmdbox.New("tstamp")
+	fmt.Println(cmdbox.Has("tstamp"))
+	fmt.Println(cmdbox.Has("blah"))
+	// Output:
+	// true
+	// false
+}
+
+func ExampleCommand_RegCommands() {
+	cmdbox.Init()
+	foo := cmdbox.New("foo", "h|help", "v|version")
+	cmdbox.New("foo help")
+	cmdbox.New("foo version")
+	cmds := foo.RegCommands()
+	fmt.Println(cmds[0].Name)
+	fmt.Println(cmds[1].Name)
+	// Output:
+	// foo help
+	// foo version
+}
+
 func ExampleNew_missing_name() {
 	cmdbox.Init()
 	defer func() { recover(); fmt.Println("missing name") }()
@@ -85,13 +108,22 @@ func ExampleNew_two_commands() {
 	// }
 }
 
-func ExampleCommand_CommandNames() {
+func ExampleCommand_Commands_Aliases() {
 	cmdbox.Init()
 	x := cmdbox.New("pomo", "halt|start", "cease|stop", "h|help")
 	x.Add("another")
-	fmt.Println(x.CommandNames())
+	fmt.Println(x.Commands.Aliases())
 	// Output:
 	// [another cease h halt help start stop]
+}
+
+func ExampleCommand_Commands_Names() {
+	cmdbox.Init()
+	x := cmdbox.New("pomo", "halt|start", "cease|stop", "h|help")
+	x.Add("another")
+	fmt.Println(x.Commands.Names())
+	// Output:
+	// [another help start stop]
 }
 
 func ExampleCommand_Complete_ignored() {

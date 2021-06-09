@@ -155,35 +155,39 @@ type Command struct {
 	Method      func(args []string) error // optional method, see Call()
 	Caller      *Command                  // last caller, see Call()
 	CompFunc    comp.Func                 // set tab completion function
-	Commands    CommandsMap               // actions and aliases to actions, see Add()
+	Commands    CommandMap                // actions and aliases to actions, see Add()
 	Params      []string                  // params, completion only
 	Default     interface{}               // default subcmd/action
 }
 
-// CommandsMap contains the command names and aliases used for
+// CommandMap contains the command names and aliases used for
 // completion pointing to the command or action name to be used.
-type CommandsMap map[string]string
+type CommandMap map[string]string
 
-// String fulfills the fmt.Stringer interface to print as JSON.
-func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
+// Names returns a sorted list of the command names.
+func (c CommandMap) Names() []string {
+	return util.UniqStrMapVals(c)
+}
 
-// CommandNames returns a sort list of all possible commands, actions
-// and aliases from the Commands (CommandsMap). Note that this does not
+// Aliases returns a sorted list of all possible commands, actions
+// and aliases from the Commands CommandMap. Note that this does not
 // include any Params and therefore is not suitable by itself for
-// producing a completion list.
-func (c *Command) CommandNames() []string {
-	if c.Commands == nil {
-		return []string{}
-	}
-	names := make([]string, len(c.Commands))
+// producing a full list for completion. This is just a list of
+// everything that is associated, directly or indirectly, with a Command
+// in the Register.
+func (c CommandMap) Aliases() []string {
+	aliases := make([]string, len(c))
 	var i int
-	for k, _ := range c.Commands {
-		names[i] = k
+	for k, _ := range c {
+		aliases[i] = k
 		i++
 	}
-	sort.Strings(names)
-	return names
+	sort.Strings(aliases)
+	return aliases
 }
+
+// String fulfills the fmt.Stringer interface to print as JSON.
+func (c CommandMap) String() string { return util.ConvertToJSON(c) }
 
 // New initializes a new Command and returns a pointer to it (assigned
 // to 'x' by convention).  The New function is guaranteed to never
@@ -340,20 +344,15 @@ func New(name string, a ...string) *Command {
 	return x
 }
 
-// Hidden returns true if the command name begins with underscore ('_').
-func (x *Command) Hidden() bool { return x.Name[0] == '_' }
-
-// VisibleCommands returns an array of visual Commands (not beginning
-// with underscore). These are used in usage and descriptions and do not
-// include any command aliases.
-func (x *Command) VisibleCommands() []*Command {
+// RegCommands returns a slice of *Command pointers sorted by name and
+// fetched from the Register that match the names returned from
+// x.Commands.Names(). If an entry in the Register is not found it is
+// simply skipped. Will return an empty slice if none found.
+func (x *Command) RegCommands() []*Command {
 	cmds := []*Command{}
-	for _, name := range x.Commands {
-		if name[0] == '_' {
-			continue
-		}
-		if command, has := Register[name]; has {
-			cmds = append(cmds, command)
+	for _, name := range x.Commands.Names() {
+		if it, has := Register[x.Name+" "+name]; has {
+			cmds = append(cmds, it)
 		}
 	}
 	return cmds
@@ -372,7 +371,7 @@ func (x *Command) SprintUsage() string {
 		buf += "**" + name + "** " +
 			strings.TrimSpace(fmt.String(x.Usage)) + "\n"
 	}
-	for _, subcmd := range x.VisibleCommands() {
+	for _, subcmd := range x.RegCommands() {
 		buf += "**" + name + "** " + subcmd.SprintUsage()
 	}
 	if len(buf) > 0 {
@@ -387,7 +386,7 @@ func (x *Command) SprintUsage() string {
 // builtin help.
 func (x *Command) SprintCommandSummaries() string {
 	buf := ""
-	for _, subcmd := range x.VisibleCommands() {
+	for _, subcmd := range x.RegCommands() {
 		buf += _fmt.Sprintf(
 			"%-14v %v\n",
 			"**"+subcmd.Name+"**",
