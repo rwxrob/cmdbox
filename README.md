@@ -171,10 +171,29 @@ on the command line.
 
 ## Design Decisions
 
-This is a summary of the design decisions made roughly in the order they
-were made. It is provided in the hopes of addressing other design
-concerns anyone reviewing this package might have before choosing to use
-it.
+This is a summary of the design decisions made over the course of the
+project (in no particular order). It is provided in the hopes of
+addressing other design concerns anyone reviewing this package might
+have before choosing to use it.
+
+* Dashes are dumb. The world has suffered enough from moronic design
+  decisions originating from `getopts` long enough. Beginning *anything*
+  but negative numbers with dashes on the command line has *always* been
+  an HCI UX anti-pattern. There is not a single justifiable case in history
+  where using dashes to identify options was *actually* required. In
+  every case, a more intelligent, human approach to the grammar of the
+  command and its arguments would have prevented all of us from fumbling
+  through decades of this absolutely horrid design. Therefore, in the
+  CmdBox world "thou shalt not use dashes, ever" is the law and breaking
+  it a cardinal sin --- whether command/action names or arguments (that
+  don't have a legitimate need for dashes in them). As Unicode has
+  standardized and become supported in all terminals, and subcommand
+  composite monoliths and conversational interfaces emerge it is well
+  past time to use *actual* human language for the best possible
+  human-command-line user experience, not some monstrous, impossible to
+  remember, command-line pseudo-language not even the computer
+  likes or wants. Each command has a language (or at least a grammar)
+  and its time we started treating them like it.
 
 * The `help` and `version` builtins have been converted into command
   modules that are imported just like any other into a CmdBox composite
@@ -182,12 +201,7 @@ it.
   composites that are highly optimized to reduce size without giving up
   the main advantages of the CmdBox approach. This also allows
   composites to be made that have commands with other names for better
-  internationalized use. It also allows programs to be created that use
-  the legacy `mapopts` approach with options and dashes switches
-  instead. Such decisions should be left to the developers
-  and not forced on everyone using CmdBox. To maintain the behavior of
-  previous CmdBox versions (and CmdTab) simply import `cmdbox-help` and
-  `cmdbox-version` like any others.
+  internationalized use.
 
 * A true rooted node tree of commands (creating essentially a grammar
   for every composite command) was discarded in favor of a flat map
@@ -205,17 +219,6 @@ it.
   ways of dealing with single or double dashes, the equals sign, single
   letter options and more. Most are also not friendly to the use of
   UTF-8 runes in the upper ranges.
-
-* Even through `getopt` can be problematic (having had to code for it
-  and around it for two decades and still has nightmares about `gpg`'s
-  interface) `MapOpts` is available for those who insist on using them
-  giving the command author the choice. Parsing traditional getopt-type
-  options and switches was originally dropped since the goals of this
-  project are to deprecate such designs in favor of modern HCI
-  approaches to command-line user interfaces. But, choice prevails over
-  opinion in this case. Still, please don't use `-f <file>` when the
-  tab-completable `file <file>` could be used instead. Even a single
-  dash `-` is nearly impossible to voice-to-text command-line interface.
 
 * Semantic emphasis `*bold*`, `**italic**`, `***bold-italic***` are the
   only inline formatting options allowed. This seems prudent given the

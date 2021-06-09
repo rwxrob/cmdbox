@@ -9,6 +9,7 @@ import (
 	"github.com/rwxrob/cmdbox/comp"
 	"github.com/rwxrob/cmdbox/fmt"
 	"github.com/rwxrob/cmdbox/util"
+	"github.com/rwxrob/cmdbox/valid"
 )
 
 // Command contains a Method or delegates to  one or more other Commands
@@ -95,7 +96,7 @@ import (
 //     skeeziks h<TAB>
 //     skeeziks help
 //
-// Tab completion rules default to the list of Commands and Parameter,
+// Tab completion rules default to the list of Commands and Params,
 // but can be overriden per Command by defining and assigning an
 // anonymous closure function to the CompFunc field (see comp.Func type).
 //
@@ -109,10 +110,15 @@ import (
 // state for their determination.
 //
 // The Params list is for completion as well. For things that are
-// neither Commands nor actions to be handled by Method. While this may
-// include dashed options they should be avoided. See
-// cmdbox/util/mapopt.go and the general documentation regarding cmdbox
-// best practices and design considerations.
+// neither Commands nor actions to be handled by Method but would be
+// nice to have included in completion. Unlike commands and aliases,
+// params do not need to begin with a Unicode letter. This allows them
+// to be used for things such as default numeric values that may begin
+// with a number or dash and other things that contain punctuation.
+// These should not, however, be used to bypass the core requirement for
+// speakable commands and aliases, and whenever possible, arguments as
+// well. (For more complex completion, assign a custom x.CompFunc
+// function.)
 //
 // The help documentation is multilayered and defaults to using color
 // and any pager detected on the system. It is vitually
@@ -162,7 +168,8 @@ func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 
 // New initializes a new Command and returns a pointer to it (assigned
 // to 'x' by convention).  The New function is guaranteed to never
-// return nil. Further initialization can be done with direct
+// return nil but will panic if invalid arguments are passed (see
+// Validation below).  Further initialization can be done with direct
 // assignments to fields of x from within the init() function. By
 // convention only one init() function with a single New call is allowed
 // per file to maintain command modularity:
@@ -272,11 +279,26 @@ func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
 // conflicts to be resolved in the main init before calling Execute when
 // needed.
 //
+// Validation
+//
+// Minimal validation is done on the name and all arguments
+// (subcommands, actions) to ensure consist interface UX for all CmdBox
+// commands --- notably, names must begin with a Unicode letter (L).
+// Since this is within the control of the developer a panic is thrown
+// if they do not pass similar to a syntax error (which should always be
+// tested and caught during development). (See the valid subpackage for
+// more details on validation.)
+//
 func New(name string, a ...string) *Command {
 	defer Unlock()
 	Lock()
 
-	// keep adding _ until not found
+	// only sane, clear CLI UX allowed
+	if !valid.Name(name) {
+		panic("invalid name (must start with letter)")
+	}
+
+	// keep adding _ until not found, must be resolved by dev
 	for {
 		_, has := Register[name]
 		if !has {
@@ -508,8 +530,14 @@ func (x *Command) Add(sigs ...string) {
 	for _, sig := range sigs {
 		aliases := strings.Split(sig, "|")
 		name := aliases[len(aliases)-1]
+		if !valid.Name(name) {
+			panic("invalid name (must start with letter)")
+		}
 		x.Commands[name] = name
 		for _, alias := range aliases {
+			if !valid.Name(alias) {
+				panic("invalid alias (must start with letter)")
+			}
 			x.Commands[alias] = name
 		}
 	}

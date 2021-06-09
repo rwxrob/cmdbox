@@ -9,13 +9,55 @@ import (
 )
 
 func ExampleNew_simple() {
+	cmdbox.Init()
 	x := cmdbox.New("tstamp")
 	fmt.Println(x.Name)
 	// Output:
 	// tstamp
 }
 
+func ExampleNew_missing_name() {
+	cmdbox.Init()
+	defer func() { recover(); fmt.Println("missing name") }()
+	cmdbox.New("")
+	// Output:
+	// missing name
+}
+
+func ExampleNew_invalid_name() {
+	cmdbox.Init()
+	defer func() { recover(); fmt.Println("invalid name") }()
+	cmdbox.New("-no")
+	// Output:
+	// invalid name
+}
+
+func ExampleNew_invalid_action_name() {
+	cmdbox.Init()
+	defer func() { recover(); fmt.Println("invalid name") }()
+	cmdbox.New("foo", "-help")
+	// Output:
+	// invalid name
+}
+
+func ExampleNew_invalid_action_name_with_alias() {
+	cmdbox.Init()
+	defer func() { recover(); fmt.Println("invalid name") }()
+	cmdbox.New("foo", "h|-help")
+	// Output:
+	// invalid name
+}
+
+func ExampleNew_invalid_alias() {
+	cmdbox.Init()
+	defer func() { recover(); fmt.Println("invalid alias") }()
+	cmdbox.New("foo", "-h|help")
+	// Output:
+	// invalid alias
+}
+
 func ExampleNew_duplicates() {
+	cmdbox.Init()
 	x1 := cmdbox.New("foo")
 	x2 := cmdbox.New("foo")
 	x3 := cmdbox.New("foo")
@@ -33,6 +75,7 @@ func ExampleNew_duplicates() {
 }
 
 func ExampleNew_two_commands() {
+	cmdbox.Init()
 	x := cmdbox.New("pomo", "start", "stop")
 	fmt.Println(x.Commands)
 	// Output:
@@ -43,6 +86,7 @@ func ExampleNew_two_commands() {
 }
 
 func ExampleCommand_Complete_ignored() {
+	cmdbox.Init()
 	x := cmdbox.New("tstamp")
 	x.Method = func(args []string) error {
 		fmt.Println(time.Now().Format(time.RFC3339))
@@ -54,6 +98,7 @@ func ExampleCommand_Complete_ignored() {
 }
 
 func ExampleCommand_Complete_actions() {
+	cmdbox.Init()
 
 	x := cmdbox.New("pomo", "start", "stop")
 	x.Method = func(a []string) error {
@@ -87,9 +132,10 @@ func ExampleCommand_Complete_actions() {
 }
 
 func ExampleCommand_Complete_params() {
+	cmdbox.Init()
 
 	x := cmdbox.New("pomo", "start", "stop")
-	x.Params = []string{"-v", "aparam"}
+	x.Params = []string{"25m", "aparam", "-10.4"}
 	x.Method = func(a []string) error {
 		if len(a) == 0 {
 			return x.UsageError()
@@ -109,21 +155,26 @@ func ExampleCommand_Complete_params() {
 	comp.This = "sto"
 	x.Complete()
 
-	comp.This = "-"
+	comp.This = "2"
 	x.Complete()
 
 	comp.This = "  "
+	x.Complete()
+
+	comp.This = "-"
 	x.Complete()
 
 	// Output:
 	// start
 	// stop
 	// stop
-	// -v
-	// -v
+	// 25m
+	// -10.4
+	// 25m
 	// aparam
 	// start
 	// stop
+	// -10.4
 }
 
 func ExampleCommand_NameFromSig() {
