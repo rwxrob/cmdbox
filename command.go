@@ -3,6 +3,7 @@ package cmdbox
 import (
 	"encoding/json"
 	_fmt "fmt"
+	"sort"
 	"strings"
 	"sync"
 
@@ -138,7 +139,7 @@ import (
 // * https://github.com/rwxrob/cmdbox-pomo
 //
 type Command struct {
-	Name        string                    // <= 14 recommended
+	Name        string                    // <= 14 recommended, word
 	Summary     interface{}               // > 65 truncated
 	Version     interface{}               // semantic version (v0.1.3)
 	Usage       interface{}               // following docopt syntax
@@ -165,6 +166,24 @@ type CommandsMap map[string]string
 
 // String fulfills the fmt.Stringer interface to print as JSON.
 func (c CommandsMap) String() string { return util.ConvertToJSON(c) }
+
+// CommandNames returns a sort list of all possible commands, actions
+// and aliases from the Commands (CommandsMap). Note that this does not
+// include any Params and therefore is not suitable by itself for
+// producing a completion list.
+func (c *Command) CommandNames() []string {
+	if c.Commands == nil {
+		return []string{}
+	}
+	names := make([]string, len(c.Commands))
+	var i int
+	for k, _ := range c.Commands {
+		names[i] = k
+		i++
+	}
+	sort.Strings(names)
+	return names
+}
 
 // New initializes a new Command and returns a pointer to it (assigned
 // to 'x' by convention).  The New function is guaranteed to never

@@ -85,6 +85,15 @@ func ExampleNew_two_commands() {
 	// }
 }
 
+func ExampleCommand_CommandNames() {
+	cmdbox.Init()
+	x := cmdbox.New("pomo", "halt|start", "cease|stop", "h|help")
+	x.Add("another")
+	fmt.Println(x.CommandNames())
+	// Output:
+	// [another cease h halt help start stop]
+}
+
 func ExampleCommand_Complete_ignored() {
 	cmdbox.Init()
 	x := cmdbox.New("tstamp")
