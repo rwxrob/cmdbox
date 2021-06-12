@@ -243,7 +243,6 @@ func ExampleString() {
 	fmt.Println(cmdbox.String())
 	// Output:
 	// {
-	//   "PackageVersion": "",
 	//   "Register": {
 	//     "foo": {
 	//       "Author": "Rob",
@@ -261,12 +260,10 @@ func ExamplePrint() {
 	cmdbox.Print()
 	// Output:
 	// {
-	//   "PackageVersion": "",
 	//   "Register": {
 	//     "foo": {
 	//       "Author": "Rob",
-	//       "Name": "foo",
-	//       "Summary": ""
+	//       "Name": "foo"
 	//     }
 	//   }
 	// }

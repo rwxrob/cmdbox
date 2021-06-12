@@ -47,7 +47,9 @@ var Main *Command
 // Command.MarshalJSON() as well.)
 func JSON() string {
 	s := make(map[string]interface{})
-	s["PackageVersion"] = Version
+	if Version != "" {
+		s["PackageVersion"] = Version
+	}
 	if Main != nil {
 		s["Main"] = Main.Name
 	}
