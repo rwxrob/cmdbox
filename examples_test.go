@@ -246,8 +246,7 @@ func ExampleString() {
 	//   "Register": {
 	//     "foo": {
 	//       "Author": "Rob",
-	//       "Name": "foo",
-	//       "Summary": ""
+	//       "Name": "foo"
 	//     }
 	//   }
 	// }

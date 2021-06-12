@@ -380,8 +380,9 @@ func (x Command) MarshalJSON() ([]byte, error) {
 	// check for empties before commiting
 	var buf string
 
-	if x.Summary != "" {
-		s["Summary"] = strings.TrimSpace(fmt.String(x.Summary))
+	buf = strings.TrimSpace(fmt.String(x.Summary))
+	if buf != "" {
+		s["Summary"] = buf
 	}
 
 	buf = strings.TrimSpace(fmt.String(x.Version))
