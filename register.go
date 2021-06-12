@@ -12,10 +12,6 @@ import (
 // writing from Register the normal considerations for safe map
 // concurrency should be observed. See Lock() and Unlock.
 //
-// By convention, commands that begin with an underscore are considered
-// hidden and must not appear in any completion. They must be named
-// explicitely to be used. See Visible() and Hidden().
-//
 // Command keys ending with an underscore may indicate a duplicate that
 // was detected and added during New(). See Duplicates(), Rename() and
 // Remove().
@@ -56,30 +52,6 @@ func Rename(from, to string) {
 	Register[to] = x
 	delete(Register, from)
 	Unlock()
-}
-
-// Visible returns a map of only the visible Register Commands not
-// beginning with underscore ('_'). See Register and Hidden().
-func Visible() map[string]*Command {
-	vis := make(map[string]*Command, len(Register))
-	for k, v := range Register {
-		if k[0] != '_' {
-			vis[k] = v
-		}
-	}
-	return vis
-}
-
-// Hidden returns a map of only the hidden Register Commands beginning
-// with underscore ('_'). See Register and Visible().
-func Hidden() map[string]*Command {
-	hid := make(map[string]*Command, len(Register))
-	for k, v := range Register {
-		if k[0] == '_' {
-			hid[k] = v
-		}
-	}
-	return hid
 }
 
 // Duplicates returns map of duplicate commands whose names end with
