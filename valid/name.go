@@ -2,18 +2,22 @@ package valid
 
 import (
 	"unicode"
-	"unicode/utf8"
 )
 
-// Name validates a name string. Names must consist of Unicode letters
-// only and need to be full, speakable words. For performance reasons,
-// only the first rune in the string is checked.
+// Name validates a name string. Names must consist of Unicode lowercase
+// letters and should be full, speakable words in order to promote
+// command lines that can be directly called from conversational UIs and
+// chat interfaces without modification.
 func Name(name string) bool {
 	if name == "" {
 		return false
 	}
-	r, _ := utf8.DecodeRuneInString(name)
-	return unicode.IsLetter(r)
+	for _, r := range name {
+		if !(unicode.IsLetter(r) && unicode.IsLower(r)) {
+			return false
+		}
+	}
+	return true
 }
 
 // Alias validates an alias string. Aliases must consist of Unicode
