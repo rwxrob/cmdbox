@@ -176,6 +176,14 @@ project (in no particular order). It is provided in the hopes of
 addressing other design concerns anyone reviewing this package might
 have before choosing to use it.
 
+* Aliases for Commands can be used for alternative languages as well
+  providing multi-lingual speakable command line interface
+  possibilities.
+
+* Centralized messages in a `map[string]string` allows them to be
+  swapped for those of other languages and the `map` means that
+  additional messages can be added to it by composite authors.
+
 * Dashes are dumb. The world has suffered enough from dubious design
   decisions made decades ago in the `getops` world when string sizes
   were limited and usernames no more than eight characters. Beginning
