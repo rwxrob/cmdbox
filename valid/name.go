@@ -1,16 +1,25 @@
 package valid
 
 import (
+	"strings"
 	"unicode"
 )
 
-// Name validates a name string. Names must consist of Unicode lowercase
-// letters and should be full, speakable words in order to promote
-// command lines that can be directly called from conversational UIs and
-// chat interfaces without modification.
+// Name validates a name string. Names must consist of one or two words
+// separated by a single space and composed of Unicode lowercase letters
+// and should be full, speakable words in order to promote command lines
+// that can be directly called from conversational UIs and chat
+// interfaces without modification.
 func Name(name string) bool {
 	if name == "" {
 		return false
+	}
+	words := strings.Split(name, " ")
+	if len(words) > 2 {
+		return false
+	}
+	if len(words) > 1 {
+		return Name(words[0]) && Name(words[1])
 	}
 	for _, r := range name {
 		if !(unicode.IsLetter(r) && unicode.IsLower(r)) {

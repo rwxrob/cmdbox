@@ -7,19 +7,24 @@ import (
 )
 
 func ExampleName() {
-	fmt.Println(valid.Name("yes"))
-	fmt.Println(valid.Name("no"))
-	fmt.Println(valid.Name("nOpe"))
-	fmt.Println(valid.Name("-no"))
-	fmt.Println(valid.Name("--hell=no"))
-	fmt.Println(valid.Name(" no"))
-	fmt.Println(valid.Name("no_no"))
+	want := map[string]bool{
+		"yes":       true,
+		"no":        true,
+		"nOpe":      false,
+		"-no":       false,
+		"--hell=no": false,
+		" no":       false,
+		"no_no":     false,
+		"foo help":  true,
+		"foo  help": false,
+	}
+	for val, expected := range want {
+		if valid.Name(val) != expected {
+			fmt.Printf("Expected %q to be %v\n", val, expected)
+			break
+		}
+	}
+	fmt.Println("pass")
 	// Output:
-	// true
-	// true
-	// false
-	// false
-	// false
-	// false
-	// false
+	// pass
 }
