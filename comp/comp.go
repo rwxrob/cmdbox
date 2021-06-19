@@ -1,8 +1,19 @@
 /*
-Package comp is the tab completion subpackage of CmdBox that implements the common completion methods needed by most CmdBox command modules.
+Copyright 2021 Robert S. Muhlestein.
 
-Currently only Bash Programmable Completion and detection with `complete -C cmd cmd` is supported.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
+
 package comp
 
 import (
@@ -20,25 +31,21 @@ import (
 var This string
 
 // Func defines a type for first-class tab completion closure functions
-// that can accept a varying number of interface{} arguments, sense its
+// that can accept a varying number of string arguments, sense the
 // completion context (see Line, Args, Word, and This), and return
-// a list of completion strings.  Managing completion logic as first
-// class functions allows for easier completion testing and modularity.
+// a list of completion strings. By managing completion logic as first
+// class functions we allow for easier completion testing and modularity.
 // An empty string slice must always be returned even on failure.
-type Func func(i ...interface{}) []string
+type Func func(i ...string) []string
 
 // Yes returns true if the current executable is being called in
-// a completion context, usually somone tapping tab. Currently, this is
-// detected only by the presence of the Bash COMP_LINE environment
-// variable. Eventually, other shell completion methods will be added.
-// See Line() (which, if length > 0, means true).
+// a completion context (usually someone tapping tab). This is detected
+// only by the presence of the Bash COMP_LINE environment variable. See
+// Line() and Programmable Completion in the bash man page.
 func Yes() bool { return len(Line()) > 0 }
 
 // Line returns the full current command line being evaluated for this
-// executable being run in completion context. (For Bash it is when
-// COMP_LINE is set. See Programmable Completion in the bash man page.)
-//
-// Only Bash is supported.
+// executable being run in completion context (see Yes).
 func Line() string {
 	if This != "" {
 		return This
