@@ -176,7 +176,7 @@ implement system documentation of any kind. Indeed, with the use of
 modern web, containerization, and git hosting documentation the need for
 any system-level documentation system is sharply diminishing. Better to
 embed it with the command itself when needed. When building container
-`FROM scratch` binaries this enables documentation with bloating the
+`FROM scratch` binaries this enables documentation without bloating the
 container up to contain the entire `man` page system. The same is true
 for tab completion itself.
 
@@ -221,19 +221,15 @@ have before choosing to use it.
   own `cmdbox-*` packages and leaving the core `cmdbox` package alone.
   Such an ecosystem is far more beneficial to the community as a whole.
 
-* Bash completion is the only completion currently supported and other
-  shell support is not planned. Bash is the default shell on all modern
-  Linux systems and although Macs now default to Zsh, completion support
-  on Zsh disastrously and unnecessarily complex. Fish is even worse. It
-  is unfortunate that the designers of these shells overlooked the
-  elegance and simplicity of `complete -C foo foo` and setting
-  `COMP_LINE` allowing programs to be responsible for their own
-  completion. Instead, these projects require their own over-engineered
-  completion models that must be contained within their own systems. The
-  CmdBox project has no intention of legitimizing such radical
-  violations of basic UNIX philosophy. This is why Bash remains the
-  default interactive shell on millions of Linux devices. Supporting
-  more than Bash is a waste of resources.
+* Any shell or system that sets the `COMP_LINE` environment and allows
+  the targeting of the same command being called to complete itself (ex:
+  `complete -C foo foo`) is supported. This obviously includes only Bash
+  at the moment, but could easily be added to other existing and
+  future shells. This established mechanism for communicating *completion
+  context* is not only mature but simple and trivial to implement.
+  The upcoming `cmdbox-ash` CmdBox command module will provide a POSIX
+  compliant shell with CmdBox compatible tab completion (as inspired by
+  BusyBox).
 
 * Aliases for Commands can be used for alternative languages as well
   providing multi-lingual speakable command line interface
