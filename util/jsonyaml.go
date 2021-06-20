@@ -36,4 +36,4 @@ func ToYAML(a interface{}) string {
 // PrintYAML prints any object as its YAML string equivalent. Commonly
 // used for testing, debugging, and visualizing complex structures. See
 // ToYAML.
-func PrintYAML(a interface{}) { fmt.Println(ToYAML(a)) }
+func PrintYAML(a interface{}) { fmt.Print(ToYAML(a)) }

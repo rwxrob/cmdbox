@@ -56,7 +56,9 @@ func ExamplePrintYAML() {
 	sample["string"] = "some thing"
 	sample["map"] = map[string]interface{}{"blah": "another"}
 	sample["array"] = []string{"blah", "another"}
+	other := map[string]string{"foo": "bar"}
 	util.PrintYAML(sample)
+	util.PrintYAML(other)
 	// Unordered output:
 	// array:
 	//     - blah
@@ -66,4 +68,5 @@ func ExamplePrintYAML() {
 	// map:
 	//     blah: another
 	// string: some thing
+	// foo: bar
 }
