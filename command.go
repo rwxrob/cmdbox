@@ -119,7 +119,26 @@ import (
 // nothing to do with sub-Commands and can access program and system
 // state for their determination.
 //
-// x.Params
+// Conventions for Text Field Values
+//
+// When providing the text of the different fields of the the Command
+// struct please keep the following conventional considerations in mind:
+//
+// * Imagine your text being spoken by a conversational assistant
+// * Avoid the use of acronymns and excessive punctuation
+// * Resist the temptation to assign const and vars outside init
+//
+// Fields such as Usage are obvious exceptions to these conventions.
+//
+// Description
+//
+// The Description contains a long Command description and can span
+// multiple paragraphs, even pages. Use of backtick quotes (`) is
+// preferred and text may be indended and wrapped anywhere. Paragraphs
+// are recognized by a blank line between them. Keep Go documentation
+// style guidelines in mind when writing them.
+//
+// Params
 //
 // The Params list is for completion as well, specifically for things
 // that are neither Commands nor actions to be handled by the Method but
