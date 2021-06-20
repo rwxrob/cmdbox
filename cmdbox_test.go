@@ -25,30 +25,38 @@ import (
 
 func ExampleReg() {
 	cmdbox.Init() // just for testing
+
 	m := cmdbox.Reg()
 	fmt.Println(m)
 	m["foo"] = cmdbox.NewCommand("foo")
 	cmdbox.PrintReg()
+
 	// Output:
 	// map[]
 	// foo:
 	//     name: foo
+
 }
 
 func ExampleJSON() {
 	cmdbox.Init() // just for testing
+
 	fmt.Println(cmdbox.JSON())
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.JSON())
+
 	// Output:
-	// {"commands":{},"messages":{"invalid.name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"},"version":"v0.0.18"}
-	// {"commands":{"foo":{"name":"foo"}},"messages":{"invalid.name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"},"version":"v0.0.18"}
+	// {"commands":{},"messages":{"invalid.name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"}}
+	// {"commands":{"foo":{"name":"foo"}},"messages":{"invalid.name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"}}
+
 }
 
 func ExampleYAML() {
 	cmdbox.Init() // just for testing
+
 	cmdbox.Add("foo")
 	fmt.Print(cmdbox.YAML())
+
 	// Output:
 	// commands:
 	//     foo:
@@ -56,105 +64,107 @@ func ExampleYAML() {
 	// messages:
 	//     invalid.name: invalid name (lower case words only)
 	//     unimplemented: 'unimplemented: %v'
-	// version: v0.0.18
+
 }
 
 func ExampleInit() {
-	m := cmdbox.Reg()
-	fmt.Println(m)
+	cmdbox.Init() // just for testing
+
+	cmdbox.Add("foo")
+	cmdbox.PrintReg()
+
+	fmt.Println("-----")
+
 	cmdbox.Init()
-	fmt.Println(m)
+	cmdbox.PrintReg()
+
 	// Output:
-	// map[foo:{"name":"foo"}]
-	// map[]
+	// foo:
+	//     name: foo
+	// -----
+	// {}
+
 }
 
 func ExampleAdd_Simple() {
 	cmdbox.Init() // just for testing
+
 	cmdbox.Add("foo")
-	cmdbox.Print()
+	cmdbox.PrintReg()
+
 	// Output:
-	// commands:
-	//     foo:
-	//         name: foo
-	// messages:
-	//     invalid.name: invalid name (lower case words only)
-	//     unimplemented: 'unimplemented: %v'
-	// version: v0.0.18
+	// foo:
+	//     name: foo
+
 }
 
 func ExampleAdd_With_Subcommands() {
 	cmdbox.Init() // just for testing
+
 	cmdbox.Add("foo", "h|help")
 	cmdbox.Add("foo help")
-	cmdbox.Print()
+	cmdbox.PrintReg()
+
 	// Output:
-	// commands:
-	//     foo:
-	//         name: foo
-	//         commands:
-	//             h: help
-	//             help: help
-	//         default: help
-	//     foo help:
-	//         name: foo help
-	// messages:
-	//     invalid.name: invalid name (lower case words only)
-	//     unimplemented: 'unimplemented: %v'
-	// version: v0.0.18
+	// foo:
+	//     name: foo
+	//     commands:
+	//         h: help
+	//         help: help
+	//     default: help
+	// foo help:
+	//     name: foo help
+
 }
 
 func ExampleAdd_With_Duplicates() {
 	cmdbox.Init() // just for testing
+
 	cmdbox.Add("foo", "h|help")
 	cmdbox.Add("foo", "h|help")
 	fmt.Println(cmdbox.Dups())
-	cmdbox.Print()
+	cmdbox.PrintReg()
+
 	// Output:
 	// [foo_]
-	// commands:
-	//     foo:
-	//         name: foo
-	//         commands:
-	//             h: help
-	//             help: help
-	//         default: help
-	//     foo_:
-	//         name: foo_
-	//         commands:
-	//             h: help
-	//             help: help
-	//         default: help
-	// messages:
-	//     invalid.name: invalid name (lower case words only)
-	//     unimplemented: 'unimplemented: %v'
-	// version: v0.0.18
+	// foo:
+	//     name: foo
+	//     commands:
+	//         h: help
+	//         help: help
+	//     default: help
+	// foo_:
+	//     name: foo_
+	//     commands:
+	//         h: help
+	//         help: help
+	//     default: help
+
 }
 
 func ExampleRename() {
 	cmdbox.Init() // just for testing
+
 	cmdbox.Add("foo", "h|help")
 	cmdbox.Add("foo", "h|help")
+
 	cmdbox.Rename("foo_", "bar")
-	cmdbox.Print()
+	cmdbox.PrintReg()
+
 	// Output:
-	// commands:
-	//     bar:
-	//         name: bar
-	//         commands:
-	//             h: help
-	//             help: help
-	//         default: help
-	//     foo:
-	//         name: foo
-	//         commands:
-	//             h: help
-	//             help: help
-	//         default: help
-	// messages:
-	//     invalid.name: invalid name (lower case words only)
-	//     unimplemented: 'unimplemented: %v'
-	// version: v0.0.18
+	// bar:
+	//     name: bar
+	//     commands:
+	//         h: help
+	//         help: help
+	//     default: help
+	// foo:
+	//     name: foo
+	//     commands:
+	//         h: help
+	//         help: help
+	//     default: help
+
 }
 
 // TODO func Load(in io.Reader) error {
@@ -162,8 +172,10 @@ func ExampleRename() {
 
 func ExampleGet() {
 	cmdbox.Init() // just for testing
+
 	cmdbox.Add("foo", "h|help")
 	cmdbox.Get("foo").Print()
+
 	// Output:
 	// name: foo
 	// commands:
@@ -174,27 +186,37 @@ func ExampleGet() {
 
 func ExampleSlice() {
 	cmdbox.Init() // just for testing
+
 	cmdbox.Add("foo", "h|help")
 	cmdbox.Add("foo help")
 	cmdbox.Add("bar")
+
 	cmds := cmdbox.Slice("foo", "bar")
 	fmt.Println(cmds)
+
 	// Output:
 	// [{"name":"foo","commands":{"h":"help","help":"help"},"default":"help"} {"name":"bar"}]
+
 }
 
 func ExampleSet() {
 	cmdbox.Init() // just for testing
+
 	foo := cmdbox.NewCommand("foo")
 	cmdbox.Set("foo", foo)
 	cmdbox.PrintReg()
+
 	fmt.Println("-----")
+
 	bar := cmdbox.NewCommand("bar")
 	cmdbox.Set("bar", bar)
 	cmdbox.PrintReg()
+
 	fmt.Println("-----")
+
 	cmdbox.Set("bar", foo)
 	cmdbox.PrintReg()
+
 	// Output:
 	// foo:
 	//     name: foo
@@ -212,12 +234,15 @@ func ExampleSet() {
 
 func ExampleDelete() {
 	cmdbox.Init() // just for testing
+
 	cmdbox.Add("foo")
 	cmdbox.Add("bar")
 	cmdbox.PrintReg()
 	fmt.Println("-----")
+
 	cmdbox.Delete("bar")
 	cmdbox.PrintReg()
+
 	// Output:
 	// bar:
 	//     name: bar
@@ -226,18 +251,24 @@ func ExampleDelete() {
 	// -----
 	// foo:
 	//     name: foo
+
 }
 
 func ExampleCall_nil_Caller() {
 	cmdbox.Init() // just for testing
+
 	x := cmdbox.Add("greet")
+
 	x.Method = func(args []string) error {
 		fmt.Println("hello")
 		return nil
 	}
+
 	cmdbox.Call(nil, "greet", nil)
+
 	// Output:
 	// hello
+
 }
 
 func ExampleCall_Caller_Subcommand() {
@@ -246,6 +277,7 @@ func ExampleCall_Caller_Subcommand() {
 	caller := cmdbox.Add("foo", "h|help")
 
 	x := cmdbox.Add("foo help")
+
 	x.Method = func(args []string) error {
 		fmt.Printf("help for foo %v\n", args)
 		return nil
@@ -259,6 +291,7 @@ func ExampleCall_Caller_Subcommand() {
 	// help for foo []
 	// help for foo []
 	// help for foo [with args]
+
 }
 
 func ExampleExecute() {

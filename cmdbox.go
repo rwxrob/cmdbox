@@ -34,11 +34,7 @@ import (
 	"github.com/rwxrob/cmdbox/util"
 )
 
-// TODO change this to a generated constant
-const Version = `v0.0.18`
-
 var state = map[string]interface{}{
-	"version":  Version,
 	"commands": reg.reg,
 	"messages": Messages,
 }
@@ -416,25 +412,17 @@ var UsageError = func(x *Command) error { return fmt.Errorf(x.Usage) }
 // stack tracing of any kind (nor is any planned for the future).
 func Call(caller *Command, name string, args []string) error {
 	defer TrapPanic()
-
-	// most common case
 	x := reg.get(name)
-
 	if caller != nil && !strings.ContainsRune(name, ' ') {
 		x = reg.get(caller.Name + " " + name)
 	}
-
 	if x == nil {
 		return Unimplemented(name)
 	}
-
 	x.Caller = caller
-
 	if x.Method != nil {
 		return x.Method(args)
 	}
-
-	// if first arg is in map of Commands call it
 	if len(args) > 0 {
 		first := args[0]
 		for k, name := range x.Commands {
@@ -443,11 +431,9 @@ func Call(caller *Command, name string, args []string) error {
 			}
 		}
 	}
-
 	if x.Default != "" {
 		return Call(caller, x.Default, args)
 	}
-
 	return x.UsageError()
 }
 
@@ -471,8 +457,9 @@ var executedAs = filepath.Base(os.Args[0])
 // into its own file will need nothing more than this in their main.go
 // file.
 //
-//     package main import "github.com/rwxrob/cmdbox" func main()
-//     { cmdbox.Execute() }
+//     package main
+//     import "github.com/rwxrob/cmdbox"
+//     func main() { cmdbox.Execute() }
 //
 // Execute first determines the name of the command to be executed
 // (explicitly passed or inferred from multicall binary, see
