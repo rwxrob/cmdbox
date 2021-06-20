@@ -301,11 +301,6 @@ have before choosing to use it.
   conventional `cmd` package name (which is ignored at `init` time)
   allows consistency for generators and cataloging.
 
-* Use of `interface{}` instead of `string` types is to provide dynamic
-  hooks into these values that can be evaluated at run time allowing
-  them to examine the environment and context and return those as values
-  when wanted.
-
 ## How Does Completion Work?
 
 Please [Bash Programmable Completion](https://duck.com/lite?kae=t&q=Bash
