@@ -1,6 +1,7 @@
 package fmt
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -29,7 +30,7 @@ func PrintPaged(buf, status string) {
 	}
 	_, err := exec.LookPath("less")
 	if err != nil || LineCount(buf) < int(term.WinSize.Row) {
-		Print(buf)
+		fmt.Print(buf)
 		return
 	}
 	less := exec.Command("less", "-r", "-Ps"+status)
