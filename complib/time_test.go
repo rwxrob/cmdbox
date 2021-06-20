@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package comp_test
+package complib_test
 
 import (
 	"fmt"
 
-	"github.com/rwxrob/cmdbox/comp"
+	comp "github.com/rwxrob/cmdbox/complib"
 )
 
 func ExampleMonth() {

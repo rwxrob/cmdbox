@@ -14,9 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package comp
+package complib
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/rwxrob/cmdbox"
+)
 
 // Lower case month names.
 var MonthNamesLower = []string{
@@ -58,11 +62,12 @@ func init() {
 	MonthNames = append(MonthNames, MonthNamesUpper...)
 }
 
-// Month fulfills comp.Func by completing comp.Word with the English
-// month names. Upper or lower case will be completed. If no Word is
-// detected will return all possible MonthNames, both lower and upper
-// case. This can be changed by assigning MonthNames to something else.
-func Month() []string {
+// Month fulfills cmdbox.CompFunc by completing comp.Word with the
+// English month names. Upper or lower case will be completed. If no
+// Word is detected will return all possible MonthNames, both lower and
+// upper case. This can be changed by assigning MonthNames to something
+// else.
+func Month(x *cmdbox.Command) []string {
 	word := Word()
 	if word == "" {
 		return MonthNames
