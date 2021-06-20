@@ -1,4 +1,4 @@
-# 🍱 CmdBox Composite Commander
+# 🍱 Go CmdBox Composite Commander
 
 ![WIP](https://img.shields.io/badge/status-wip-red.svg)
 [![GoDoc](https://godoc.org/github.com/rwxrob/cmdbox?status.svg)](https://godoc.org/github.com/rwxrob/cmdbox)
@@ -6,7 +6,10 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rwxrob/cmdbox)](https://goreportcard.com/report/github.com/rwxrob/cmdbox)
 [![Coverage](https://gocover.io/_badge/github.com/rwxrob/cmdbox)](https://gocover.io/github.com/rwxrob/cmdbox)
 
-*A golang commander for modern command-line human-computer interactions.*
+*A composite commander for modern human-computer text interactions.*
+
+> "It's like a modular, multicall BusyBox builder for Go with built in
+> completion and multi-lingual, embedded documentation support."
 
 *CmdBox* is a lightweight commander package focused on creating
 light-weight, self-contained, human-friendly terminal command-line
@@ -175,6 +178,17 @@ This is a summary of the design decisions made over the course of the
 project (in no particular order). It is provided in the hopes of
 addressing other design concerns anyone reviewing this package might
 have before choosing to use it.
+
+* Bash completion is the only completion currently supported and no
+  immediate plans to support other shells are planned. Bash is the
+  default shell on any modern interactive system that matters. Zsh
+  completion is a complete disaster, Fish is even worse. The designers
+  of these shells overlooked the pure elegance and simplicity of
+  `complete -C foo foo` setting `COMP_LINE` allowing programs to be
+  responsible for their own completion. Instead, they took the
+  draconian, over-engineered position of forcing all completion to be
+  done within their own systems. This project has no intention of
+  legitimizing such anti-developer violations of basic UNIX philosophy.
 
 * Aliases for Commands can be used for alternative languages as well
   providing multi-lingual speakable command line interface
