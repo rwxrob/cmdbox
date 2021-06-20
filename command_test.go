@@ -46,6 +46,13 @@ func ExampleNewCommand_invalid() {
 	// invalid name (lower case words only)
 }
 
+func ExampleNewCommand_dup() {
+	x := cmdbox.NewCommand("foo_")
+	x.Print()
+	// Output:
+	// name: foo_
+}
+
 func ExampleNewCommand_commands() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.NewCommand("foo", "h|help", "version", "l|ls|list")

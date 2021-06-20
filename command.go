@@ -170,20 +170,15 @@ type Method func(args []string) error
 
 // NewCommand returns pointer to new initialized Command. See the New
 // package function instead for creating a new Command that is also
-// added to the Register.
-//
-// Minimal validation is done on the name and all arguments
-// (subcommands, actions) to ensure a consistent user experience for all
-// CmdBox commands --- notably, names must begin with a Unicode letter
-// (L).  Since this is within the control of the developer a panic is
-// thrown if invalid (similar to a syntax error which should be tested
-// and caught during development). (See the valid subpackage for more
-// details on validation.)
-//
+// added to the Register. Minimal validation is done on the name and all
+// arguments (subcommands, actions) to ensure a consistent user
+// experience for all CmdBox commands (see valid subpackage for more).
+// Since calling NewCommand involves critical syntax checks a panic is
+// thrown if invalid.
 func NewCommand(name string, a ...string) *Command {
 	x := new(Command)
-	if !valid.Name(name) {
-		panic(Messages["InvalidName"])
+	if !valid.Name(name) && name[len(name)-1] != '_' {
+		panic(Messages["invalid.name"])
 	}
 	x.Name = name
 	if len(a) > 0 {
@@ -256,12 +251,12 @@ func (x *Command) Add(sigs ...string) {
 		aliases := strings.Split(sig, "|")
 		name := aliases[len(aliases)-1]
 		if !valid.Name(name) {
-			panic(Messages["InvalidName"])
+			panic(Messages["invalid.name"])
 		}
 		x.Commands[name] = name
 		for _, alias := range aliases {
 			if !valid.Name(alias) {
-				panic(Messages["InvalidName"])
+				panic(Messages["invalid.name"])
 			}
 			x.Commands[alias] = name
 		}
