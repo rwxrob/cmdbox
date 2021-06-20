@@ -303,8 +303,8 @@ have before choosing to use it.
 
 ## How Does Completion Work?
 
-Please [Bash Programmable Completion](https://duck.com/lite?kae=t&q=Bash
-Programmable Completion) and pay specific attention to the `complete -C`
+Please [Bash Programmable
+Completion](https://duck.com/lite?kae=t&q=Bash%20Programmable%20Completion) and pay specific attention to the `complete -C`
 option. 
 
 For Bash all you need to add to your `~/.bashrc` file is the following: 
