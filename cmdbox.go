@@ -75,7 +75,7 @@ func YAML() string { return util.ToYAML(state) }
 
 // Print is shortcut for fmt.Println(cmdbox.YAML()) which is mostly only
 // useful during testing.
-func Print() { fmt.Println(YAML()) }
+func Print() { fmt.Print(YAML()) }
 
 // PrintReg is shortcut for util.PrintYAML(cmdbox.Reg()) which is mostly
 // only useful during testing.
@@ -261,7 +261,9 @@ func (r *register) rename(from, to string) {
 // any existing matches for the package state including the internal
 // Messages and Commands. Input must be valid YAML data (which includes
 // JSON). This allows CmdBox composites to dynamically adapt to language
-// and locale. See JSON, YAML, and String as well.
+// and locale. Attempts to load Command data that has not already been
+// registered (with Add or Set) will silently fail. See JSON, YAML, and
+// String as well.
 func Load(in io.Reader) error {
 	// TODO
 	return fmt.Errorf("not yet implemented")
