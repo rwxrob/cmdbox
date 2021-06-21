@@ -8,15 +8,16 @@ import (
 
 func ExampleName() {
 	want := map[string]bool{
-		"yes":       true,
-		"no":        true,
-		"nOpe":      false,
-		"-no":       false,
-		"--hell=no": false,
-		" no":       false,
-		"no_no":     false,
-		"foo help":  true,
-		"foo  help": false,
+		"yes":           true,
+		"no":            true,
+		"nOpe":          false,
+		"-no":           false,
+		"--hell=no":     false,
+		" no":           false,
+		"no_no":         false,
+		"foo help":      true,
+		"foo help here": true,
+		"foo  help":     false,
 	}
 	for val, expected := range want {
 		if valid.Name(val) != expected {

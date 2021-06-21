@@ -18,13 +18,21 @@ func Name(name string) bool {
 		return false
 	}
 	words := strings.Split(name, " ")
-	if len(words) > 2 {
+	for _, word := range words {
+		//	fmt.Printf("%q\n", word)
+		if !IsWord(word) {
+			return false
+		}
+	}
+	return true
+}
+
+// IsWord returns true if ever rune is a lowercase letter.
+func IsWord(w string) bool {
+	if len(w) == 0 {
 		return false
 	}
-	if len(words) > 1 {
-		return Name(words[0]) && Name(words[1])
-	}
-	for _, r := range name {
+	for _, r := range w {
 		if !(unicode.IsLetter(r) && unicode.IsLower(r)) {
 			return false
 		}
