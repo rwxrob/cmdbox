@@ -32,6 +32,7 @@ import (
 
 	"github.com/rwxrob/cmdbox/comp"
 	"github.com/rwxrob/cmdbox/util"
+	"gopkg.in/yaml.v3"
 )
 
 var state = map[string]interface{}{
@@ -44,6 +45,8 @@ var reg = func() *register {
 	r.init()
 	return r
 }()
+
+var mut sync.Mutex
 
 type register struct {
 	reg map[string]*Command
@@ -82,9 +85,17 @@ func Print() { fmt.Print(YAML()) }
 func PrintReg() { util.PrintYAML(reg.reg) }
 
 // Init initializes (or re-initialized) the package status and empties
-// the internal commands register (without changing its reference).
-// Init is primarily intended for testing to reset the cmdbox package.
-func Init() { reg.init() }
+// the internal commands register (without changing its reference) and
+// sets the standard Messages back to defaults (but does not override
+// any newly added Messages). Init is primarily intended for testing to
+// reset the cmdbox package.
+func Init() {
+	defer mut.Unlock()
+	mut.Lock()
+	reg.init()
+	Messages["unimplemented"] = m_unimplemented
+	Messages["invalid_name"] = m_invalid_name
+}
 
 func (r *register) init() {
 	defer r.Unlock()
@@ -215,6 +226,17 @@ func Add(name string, a ...string) *Command {
 	return x
 }
 
+// Names returns a sorted list of all Command names in the internal
+// register.
+func Names() []string {
+	names := []string{}
+	for name, _ := range reg.reg {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
 // Dups returns key strings of duplicates (which can then be easily
 // renamed). Keys are sorted in lexicographic order. See Rename.
 func Dups() []string { return reg.dups() }
@@ -262,11 +284,43 @@ func (r *register) rename(from, to string) {
 // Messages and Commands. Input must be valid YAML data (which includes
 // JSON). This allows CmdBox composites to dynamically adapt to language
 // and locale. Attempts to load Command data that has not already been
-// registered (with Add or Set) will silently fail. See JSON, YAML, and
-// String as well.
-func Load(in io.Reader) error {
-	// TODO
-	return fmt.Errorf("not yet implemented")
+// registered (with Add or Set) will silently fail. Messages will always
+// be unmarshaled as is so that authors can add their own. See JSON,
+// YAML, Command.Update, and String as well.
+func Load(in interface{}) error {
+	var buf []byte
+	var err error
+	switch v := in.(type) {
+	case io.Reader:
+		buf, err = io.ReadAll(v)
+		if err != nil {
+			return err
+		}
+	case []byte:
+		buf = v
+	default:
+		return fmt.Errorf(Messages["bad_type"], v)
+	}
+	m := map[string]interface{}{}
+	err = yaml.Unmarshal(buf, &m)
+	if err != nil {
+		return err
+	}
+	if v, has := m["messages"]; has {
+		mut.Lock()
+		for k, v := range v.(map[string]interface{}) {
+			Messages[k] = v.(string)
+		}
+		mut.Unlock()
+	}
+	if v, has := m["commands"]; has {
+		for name, cmd := range reg.reg {
+			if i, has := v.(map[string]interface{})[name]; has {
+				cmd.Update(i)
+			}
+		}
+	}
+	return nil
 }
 
 // LoadFS loads the specified file from the filesystem passed. Any
@@ -278,10 +332,14 @@ func Load(in io.Reader) error {
 // implied. Also see the go:embed compiler directive for ways to ship
 // single executables with multi-lingual/-locale support.  The util
 // subpackage of this module may also contain helpful tools for
-// determining locale and such to help identify which file to pass.
-func LoadFS(f string, fs fs.FS) error {
-	// TODO
-	return fmt.Errorf("not yet implemented")
+// determining locale and such to help identify which file to pass. See
+// Load for more.
+func LoadFS(fsys fs.FS, file string) error {
+	buf, err := fs.ReadFile(fsys, file)
+	if err != nil {
+		return err
+	}
+	return Load(buf)
 }
 
 // Get returns the *Command for key name if found.

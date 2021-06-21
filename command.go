@@ -136,7 +136,8 @@ import (
 // multiple paragraphs, even pages. Use of backtick quotes (`) is
 // preferred and text may be indended and wrapped anywhere. Paragraphs
 // are recognized by a blank line between them. Keep Go documentation
-// style guidelines in mind when writing them.
+// style guidelines in mind when writing them (headers on single line,
+// four space indent for verbatim text, etc.)
 //
 // Params
 //
@@ -172,7 +173,6 @@ type Command struct {
 	Issues      string   `json:"issues,omitempty" yaml:",omitempty"`
 	Copyright   string   `json:"copyright,omitempty" yaml:",omitempty"`
 	License     string   `json:"license,omitempty" yaml:",omitempty"`
-	Other       Map      `json:"other,omitempty" yaml:",omitempty"`
 	Commands    Map      `json:"commands,omitempty" yaml:",omitempty"`
 	Params      []string `json:"params,omitempty" yaml:",omitempty"`
 	Default     string   `json:"default,omitempty" yaml:",omitempty"`
@@ -197,14 +197,13 @@ type Method func(args []string) error
 func NewCommand(name string, a ...string) *Command {
 	x := new(Command)
 	if !valid.Name(name) && name[len(name)-1] != '_' {
-		panic(Messages["invalid.name"])
+		panic(Messages["invalid_name"])
 	}
 	x.Name = name
 	if len(a) > 0 {
 		x.Add(a...)
 		x.Default = util.SplitBarPop(a[0])
 	}
-	x.Other = map[string]string{}
 	return x
 }
 
@@ -270,16 +269,58 @@ func (x *Command) Add(sigs ...string) {
 		aliases := strings.Split(sig, "|")
 		name := aliases[len(aliases)-1]
 		if !valid.Name(name) {
-			panic(Messages["invalid.name"])
+			panic(Messages["invalid_name"])
 		}
 		x.Commands[name] = name
 		for _, alias := range aliases {
 			if !valid.Name(alias) {
-				panic(Messages["invalid.name"])
+				panic(Messages["invalid_name"])
 			}
 			x.Commands[alias] = name
 		}
 	}
+}
+
+// Update takes a map[string]interface{} or map[string]string and
+// updates any matching existing values to the new ones. Names can be in
+// upper or lower case. The folowing fields will never be changed: Name,
+// Commands, Params, Default. See cmdbox.Load.
+func (x *Command) Update(i interface{}) error {
+	m := make(map[string]string)
+
+	switch v := i.(type) {
+	case map[string]interface{}:
+		m = util.ToStringMap(v)
+	case map[string]string:
+		m = v
+	}
+	for name, val := range m {
+		switch name {
+		case "Summary", "summary":
+			x.Summary = val
+		case "Version", "version":
+			x.Version = val
+		case "Usage", "usage":
+			x.Usage = val
+		case "Description", "description":
+			x.Description = val
+		case "Examples", "examples":
+			x.Examples = val
+		case "SeeAlso", "seealso":
+			x.SeeAlso = val
+		case "Author", "author":
+			x.Author = val
+		case "Git", "git":
+			x.Git = val
+		case "Issues", "issues":
+			x.Issues = val
+		case "Copyright", "copyright":
+			x.Copyright = val
+		case "License", "license":
+			x.License = val
+		}
+	}
+	return nil
 }
 
 // Complete prints the possible strings based on the current Command and

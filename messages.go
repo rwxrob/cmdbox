@@ -28,6 +28,13 @@ package cmdbox
 // Message keys with the Command.Name and a single space to prevent
 // unwanted accidental conflict. See JSON and Load for more.
 var Messages = map[string]string{
-	"invalid.name":  "invalid name (lower case words only)",
-	"unimplemented": "unimplemented: %v",
+	"invalid_name":  m_invalid_name,
+	"unimplemented": m_unimplemented,
+	"bad_type":      m_bad_type,
 }
+
+const (
+	m_invalid_name  = "invalid name (lower case words only)"
+	m_unimplemented = "unimplemented: %v"
+	m_bad_type      = "unsupported type: %T"
+)

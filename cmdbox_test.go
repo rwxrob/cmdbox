@@ -19,6 +19,7 @@ package cmdbox_test
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/rwxrob/cmdbox"
 )
@@ -46,8 +47,8 @@ func ExampleJSON() {
 	fmt.Println(cmdbox.JSON())
 
 	// Output:
-	// {"commands":{},"messages":{"invalid.name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"}}
-	// {"commands":{"foo":{"name":"foo"}},"messages":{"invalid.name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"}}
+	// {"commands":{},"messages":{"bad_type":"unsupported type: %T","invalid_name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"}}
+	// {"commands":{"foo":{"name":"foo"}},"messages":{"bad_type":"unsupported type: %T","invalid_name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"}}
 
 }
 
@@ -62,7 +63,8 @@ func ExampleYAML() {
 	//     foo:
 	//         name: foo
 	// messages:
-	//     invalid.name: invalid name (lower case words only)
+	//     bad_type: 'unsupported type: %T'
+	//     invalid_name: invalid name (lower case words only)
 	//     unimplemented: 'unimplemented: %v'
 
 }
@@ -142,6 +144,19 @@ func ExampleAdd_With_Duplicates() {
 
 }
 
+func ExampleNames() {
+	cmdbox.Init() // just for testing
+
+	cmdbox.Add("foo")
+	cmdbox.Add("bar")
+
+	fmt.Println(cmdbox.Names())
+
+	// Output:
+	// [bar foo]
+
+}
+
 func ExampleRename() {
 	cmdbox.Init() // just for testing
 
@@ -167,8 +182,86 @@ func ExampleRename() {
 
 }
 
-// TODO func Load(in io.Reader) error {
-// TODO func LoadFS(f string, fs fs.FS) error {
+func ExampleLoad() {
+	cmdbox.Init() // just for testing
+
+	cmdbox.Add("foo", "h|help")
+	cmdbox.Add("foo help")
+
+	buf := strings.NewReader(`
+commands:
+    foo:
+        usage: '[h|help]'
+        summary: some summary
+        description: some description
+    foo help:
+        summary: display foo help
+messages:
+    new message: this is new
+    unimplemented: nope, don't have this yet
+`)
+
+	err := cmdbox.Load(buf)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	cmdbox.Print()
+
+	// Output:
+	// commands:
+	//     foo:
+	//         name: foo
+	//         summary: some summary
+	//         usage: '[h|help]'
+	//         description: some description
+	//         commands:
+	//             h: help
+	//             help: help
+	//         default: help
+	//     foo help:
+	//         name: foo help
+	//         summary: display foo help
+	// messages:
+	//     bad_type: 'unsupported type: %T'
+	//     invalid_name: invalid name (lower case words only)
+	//     new message: this is new
+	//     unimplemented: nope, don't have this yet
+
+}
+
+func ExampleLoadFS() {
+	cmdbox.Init() // just for testing
+
+	cmdbox.Add("foo", "h|help")
+	cmdbox.Add("foo help")
+
+	cmdbox.LoadFS(os.DirFS("testdata"), "loadfs.yaml")
+	cmdbox.Print()
+
+	// Output:
+	// commands:
+	//     foo:
+	//         name: foo
+	//         summary: some summary
+	//         usage: '[h|help]'
+	//         description: some description
+	//         commands:
+	//             h: help
+	//             help: help
+	//         default: help
+	//     foo help:
+	//         name: foo help
+	//         summary: display foo help
+	// messages:
+	//     bad_type: 'unsupported type: %T'
+	//     invalid_name: invalid name (lower case words only)
+	//     new message: this is new
+	//     unimplemented: nope, don't have this yet
+
+}
 
 func ExampleGet() {
 	cmdbox.Init() // just for testing

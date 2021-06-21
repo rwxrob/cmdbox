@@ -135,6 +135,25 @@ func ExampleCommand_Add() {
 	//     version: version
 }
 
+func ExampleCommand_Update() {
+	x := cmdbox.NewCommand("foo")
+	x.Summary = "does foo stuff"
+
+	m := map[string]interface{}{
+		"summary":     "really does foo stuff",
+		"description": "foo description",
+	}
+
+	x.Update(m)
+	x.Print()
+
+	// Output:
+	// name: foo
+	// summary: really does foo stuff
+	// description: foo description
+
+}
+
 func ExampleComplete_commands() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.NewCommand("foo")

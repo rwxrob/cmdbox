@@ -32,6 +32,12 @@ import (
 // well.
 type Map map[string]string
 
+// ToMap converts a map[string]interface{} into a Map
+// (map[string]string). See util.ToStringMap.
+func ToMap(m map[string]interface{}) Map {
+	return Map(util.ToStringMap(m))
+}
+
 // Names returns a sorted list of the command names only. Also see
 // Aliases and Keys
 func (m Map) Names() []string {

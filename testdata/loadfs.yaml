@@ -1,0 +1,10 @@
+commands:
+    foo:
+        usage: '[h|help]'
+        summary: some summary
+        description: some description
+    foo help:
+        summary: display foo help
+messages:
+    new message: this is new
+    unimplemented: nope, don't have this yet

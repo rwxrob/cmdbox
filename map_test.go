@@ -51,3 +51,14 @@ func ExampleMap() {
 	// f: foo
 	// foo: foo
 }
+
+func ExampleToMap() {
+	m := map[string]interface{}{
+		"foo": "a foo",
+		"bar": "a bar",
+	}
+	n := cmdbox.ToMap(m)
+	fmt.Printf("%T != %T\n", m, n)
+	// Output:
+	// map[string]interface {} != cmdbox.Map
+}
