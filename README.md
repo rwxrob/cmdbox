@@ -3,7 +3,6 @@
 [![GoDoc](https://godoc.org/github.com/rwxrob/cmdbox?status.svg)](https://godoc.org/github.com/rwxrob/cmdbox)
 [![License](https://img.shields.io/badge/license-Apache2-brightgreen.svg)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rwxrob/cmdbox)](https://goreportcard.com/report/github.com/rwxrob/cmdbox)
-[![Coverage](https://gocover.io/_badge/github.com/rwxrob/cmdbox)](https://gocover.io/github.com/rwxrob/cmdbox)
 
 *A composite commander for modern human-computer text interactions.*
 
@@ -420,7 +419,7 @@ Copyright 2021 Robert S. Muhlestein (<mailto:rob@rwx.gg>)
 Licensed under Apache-2.0
 
 "CmdBox" and "cmdbox" are legal trademarks of Robert S. Muhlestein but
-can be used freely to refer to this specific project without limitation.
-To avoid potential developer confusion, intentionally using these
-trademarks to refer to other projects --- free or proprietary --- is
-prohibited.
+can be used freely to refer to the CmdBox project
+<https://github.com/rwxrob/cmdbox> without limitation. To avoid
+potential developer confusion, intentionally using these trademarks to
+refer to other projects --- free or proprietary --- is prohibited.
