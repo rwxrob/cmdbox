@@ -27,7 +27,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"sync"
 
 	"github.com/rwxrob/cmdbox/comp"
@@ -93,8 +92,11 @@ func Init() {
 	defer mut.Unlock()
 	mut.Lock()
 	reg.init()
-	Messages["unimplemented"] = m_unimplemented
 	Messages["invalid_name"] = m_invalid_name
+	Messages["unimplemented"] = m_unimplemented
+	Messages["syntax_error"] = m_syntax_error
+	Messages["missing_arg"] = m_missing_arg
+	Messages["bad_type"] = m_bad_type
 }
 
 func (r *register) init() {
@@ -299,7 +301,7 @@ func Load(in interface{}) error {
 	case []byte:
 		buf = v
 	default:
-		return fmt.Errorf(Messages["bad_type"], v)
+		return BadType(v)
 	}
 	m := map[string]interface{}{}
 	err = yaml.Unmarshal(buf, &m)
@@ -443,58 +445,128 @@ var Unimplemented = func(a string) error {
 // everthing in the composite command.
 var UsageError = func(x *Command) error { return fmt.Errorf(x.Usage) }
 
-// ------------------------- call and execute -------------------------
+// BadType returns an error containing the bad type attempted.
+var BadType = func(v interface{}) error {
+	return fmt.Errorf(Messages["bad_type"], v)
+}
 
-// Call allows any Command in the internal register to be called
-// directly by name. The first argument is a pointer to the calling
-// Command (which may be nil). If the caller is not nil and the name
-// does not contain a space then the name is assumed to be a subcommand
-// of the caller in which case the caller.Name+" "+name (ex: foo help)
-// will first be tried before the name alone. By convention, passing
-// a nil as the caller indicates the Command was called from something
-// besides another Command, usually the cmdbox package itself. If the
-// name cannot be found in the register at all then ExitUnimplemented is
-// called instead.
+// MissingArg returns an error stating that the name of the parameter
+// for which no argument was found.
+var MissingArg = func(name string) error {
+	return fmt.Errorf(Messages["missing_arg"], name)
+}
+
+// SyntaxErrorPanic panics with the message stating the problem.
+var SyntaxErrorPanic = func(msg string) {
+	panic(fmt.Sprintf(Messages["syntax_error"], msg))
+}
+
+// SyntaxError returns an error with the message stating the problem.
+var SyntaxError = func(msg string) error {
+	return fmt.Errorf(Messages["syntax_error"], msg)
+}
+
+// --------------------- resolve / call / execute ---------------------
+
+// Resolve looks up a Command from the internal register based on the
+// caller and the name. If the Name of the caller and name passed,
+// joined with a space (a fully qualified entry) is found
+// then that is used instead of just the name. Otherwise, just the name
+// is looked up (which might itself already be fully qualified).  The
+// returned Command (x) is examined further to decide which Method and Args
+// to return:
 //
-// When a Command is found in the register then delegation resolves as
-// follows (with x as *Command):
+//   * If x.Method defined, call and return it with args unaltered
 //
-//     1. If x.Method is not nil, delegate to it:
-//            return x.Method(args)
-//     2. If first arg in x.Commands, shift args and delegate:
-//            return Call(caller, x.Name+" "+first, args[1:])
-//     3. If x.Default, assume all args intended for default:
-//            return Call(caller, x.Name+" "+x.Default, args)
-//     4. Return x.UsageError which propogates to ExitError
+//   * If first arg in x.Commands, recursively Call with shifted args
 //
-// Note the recursive call to Call itself does not change the original
-// caller. This is by design. There is no implementation of call
-// stack tracing of any kind (nor is any planned for the future).
-func Call(caller *Command, name string, args []string) error {
-	defer TrapPanic()
+//     * First with x.Name + " " + cmd
+//     * Then with just cmd
+//
+//   * If x.Default defined, recursively Call with shifted args
+//
+//     * First with x.Name + " " + x.Default
+//     * Then with just x.Default
+//
+//   * Return nil and args
+//
+// By convention, passing a nil as the caller indicates the Command was
+// called from something besides another Command, usually the cmdbox
+// package itself. See Call, Command, ExampleResolve for more.
+func Resolve(caller *Command, name string, args []string) (Method,
+	[]string) {
 	x := reg.get(name)
-	if caller != nil && !strings.ContainsRune(name, ' ') {
-		x = reg.get(caller.Name + " " + name)
+
+	// override with fully qualified, if found
+	if caller != nil {
+		full := reg.get(caller.Name + " " + name)
+		if full != nil {
+			x = full
+		}
 	}
+
+	// nothing to even start from, bailing
 	if x == nil {
-		return Unimplemented(name)
+		return nil, args
 	}
-	x.Caller = caller
+
+	// ultimately, this is where recursion stops (successfully)
 	if x.Method != nil {
-		return x.Method(args)
+		return x.Method, args
 	}
+
+	// check if the first argument is a command with Method
 	if len(args) > 0 {
 		first := args[0]
-		for k, name := range x.Commands {
-			if k == first {
-				return Call(caller, name, args[1:])
+		if cmd, has := x.Commands[first]; has {
+			name = name + " " + cmd
+			method, margs := Resolve(caller, name, args[1:])
+			if method != nil {
+				return method, margs
+			}
+			method, margs = Resolve(caller, cmd, args[1:])
+			if method != nil {
+				return method, margs
 			}
 		}
 	}
+
+	// check for default command with method
 	if x.Default != "" {
-		return Call(caller, x.Default, args)
+		name = name + " " + x.Default
+		method, margs := Resolve(caller, name, args)
+		if method != nil {
+			return method, margs
+		}
+		method, margs = Resolve(caller, x.Default, args)
+		if method != nil {
+			return method, margs
+		}
 	}
-	return x.UsageError()
+
+	// out of options
+	return nil, args
+}
+
+// Call allows any Command in the internal register to be called
+// directly by name. The first argument is an optional pointer to the
+// calling Command, the second is the required name, and the third is an
+// optional list of string arguments (or nil). Resolve is first called
+// to get the Command from the internal registry and lookup the proper
+// Method and any argument shifting required. If no Method is returned
+// Call returns Unimplemented. Otherwise, Method is called with its
+// arguments and error result returned.  See Resolve, Command, Execute,
+// and ExampleCall as well.
+func Call(caller *Command, name string, args []string) error {
+	defer TrapPanic()
+	if name == "" {
+		return MissingArg("name")
+	}
+	method, args := Resolve(caller, name, args)
+	if method == nil {
+		return Unimplemented(name)
+	}
+	return method(args)
 }
 
 // ExecutedAs returns the multicall inferred name of the executable as

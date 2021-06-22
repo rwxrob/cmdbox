@@ -47,8 +47,8 @@ func ExampleJSON() {
 	fmt.Println(cmdbox.JSON())
 
 	// Output:
-	// {"commands":{},"messages":{"bad_type":"unsupported type: %T","invalid_name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"}}
-	// {"commands":{"foo":{"name":"foo"}},"messages":{"bad_type":"unsupported type: %T","invalid_name":"invalid name (lower case words only)","unimplemented":"unimplemented: %v"}}
+	// {"commands":{},"messages":{"bad_type":"unsupported type: %T","invalid_name":"invalid name (must be lowercase word): %v","missing_arg":"missing argument for %v","syntax_error":"syntax error: %v","unimplemented":"unimplemented: %v"}}
+	// {"commands":{"foo":{"name":"foo"}},"messages":{"bad_type":"unsupported type: %T","invalid_name":"invalid name (must be lowercase word): %v","missing_arg":"missing argument for %v","syntax_error":"syntax error: %v","unimplemented":"unimplemented: %v"}}
 
 }
 
@@ -64,7 +64,9 @@ func ExampleYAML() {
 	//         name: foo
 	// messages:
 	//     bad_type: 'unsupported type: %T'
-	//     invalid_name: invalid name (lower case words only)
+	//     invalid_name: 'invalid name (must be lowercase word): %v'
+	//     missing_arg: missing argument for %v
+	//     syntax_error: 'syntax error: %v'
 	//     unimplemented: 'unimplemented: %v'
 
 }
@@ -88,7 +90,7 @@ func ExampleInit() {
 
 }
 
-func ExampleAdd_Simple() {
+func ExampleAdd_simple() {
 	cmdbox.Init() // just for testing
 
 	cmdbox.Add("foo")
@@ -100,7 +102,7 @@ func ExampleAdd_Simple() {
 
 }
 
-func ExampleAdd_With_Subcommands() {
+func ExampleAdd_with_subcommands() {
 	cmdbox.Init() // just for testing
 
 	cmdbox.Add("foo", "h|help")
@@ -119,7 +121,7 @@ func ExampleAdd_With_Subcommands() {
 
 }
 
-func ExampleAdd_With_Duplicates() {
+func ExampleAdd_with_duplicates() {
 	cmdbox.Init() // just for testing
 
 	cmdbox.Add("foo", "h|help")
@@ -226,8 +228,10 @@ messages:
 	//         summary: display foo help
 	// messages:
 	//     bad_type: 'unsupported type: %T'
-	//     invalid_name: invalid name (lower case words only)
+	//     invalid_name: 'invalid name (must be lowercase word): %v'
+	//     missing_arg: missing argument for %v
 	//     new message: this is new
+	//     syntax_error: 'syntax error: %v'
 	//     unimplemented: nope, don't have this yet
 
 }
@@ -257,8 +261,10 @@ func ExampleLoadFS() {
 	//         summary: display foo help
 	// messages:
 	//     bad_type: 'unsupported type: %T'
-	//     invalid_name: invalid name (lower case words only)
+	//     invalid_name: 'invalid name (must be lowercase word): %v'
+	//     missing_arg: missing argument for %v
 	//     new message: this is new
+	//     syntax_error: 'syntax error: %v'
 	//     unimplemented: nope, don't have this yet
 
 }
@@ -347,7 +353,63 @@ func ExampleDelete() {
 
 }
 
-func ExampleCall_nil_Caller() {
+func ExampleResolve() {
+	cmdbox.Init() // just for testing
+
+	gr := cmdbox.Add("greet", "h|help", "fr|french", "ru|russian")
+	gr.Summary = "main greet composite, no method"
+
+	fr := cmdbox.Add("greet french")
+	fr.Method = func(args []string) error {
+		fmt.Print("Salut")
+		return nil
+	}
+
+	ru := cmdbox.Add("greet russian")
+	ru.Method = func(args []string) error {
+		fmt.Print("Privyet")
+		return nil
+	}
+
+	h := cmdbox.Add("help")
+	h.Summary = "lonely, useless, help"
+	h.Method = func(args []string) error {
+		fmt.Printf("help")
+		return nil
+	}
+
+	tests := []struct {
+		caller *cmdbox.Command
+		name   string
+		args   []string
+	}{
+		{nil, "greet", nil},
+		{nil, "greet", []string{"h"}},
+		{nil, "greet", []string{"hi"}},
+		{nil, "greet russian", []string{"hi"}},
+		{gr, "russian", []string{"hi"}},
+	}
+
+	for _, t := range tests {
+		method, args := cmdbox.Resolve(t.caller, t.name, t.args)
+		if method != nil {
+			method(args)
+			fmt.Printf(" %v %q\n", t.name, args)
+			continue
+		}
+		fmt.Printf("failed: %v %q\n", t.name, t.args)
+	}
+
+	// Output:
+	// help greet []
+	// help greet []
+	// help greet ["hi"]
+	// Privyet greet russian ["hi"]
+	// Privyet russian ["hi"]
+
+}
+
+func ExampleCall_nil_caller() {
 	cmdbox.Init() // just for testing
 
 	x := cmdbox.Add("greet")
@@ -364,7 +426,7 @@ func ExampleCall_nil_Caller() {
 
 }
 
-func ExampleCall_Caller_Subcommand() {
+func ExampleCall_caller_subcommand() {
 	cmdbox.Init() // just for testing
 
 	caller := cmdbox.Add("foo", "h|help")
@@ -387,55 +449,62 @@ func ExampleCall_Caller_Subcommand() {
 
 }
 
-func ExampleExecute() {
+func ExampleExecute_no_method() {
 	cmdbox.Init() // just for testing
 
-	// add foo with default (first) help subcommand
-	x := cmdbox.Add("foo", "h|help")
-	x.Summary = "foo the things"
-
-	// will fail since no method and help is unimplemented
-	// (could also leave "foo" out if exe named foo)
+	cmdbox.Add("foo", "h|help")
 	cmdbox.Execute("foo")
 
-	// add foo's help subcommand (without a method)
+	// Output:
+	// unimplemented: foo
+	// unexpected call to os.Exit(0) during test
+
+}
+
+func ExampleExecute_unimplemented_default() {
+	cmdbox.Init() // just for testing
+
+	cmdbox.Add("foo", "h|help")
+	cmdbox.Add("foo help")
+	cmdbox.Execute("foo")
+
+	// Output:
+	// unimplemented: foo
+	// unexpected call to os.Exit(0) during test
+
+}
+
+func ExampleExecute_first_is_default() {
+	cmdbox.Init() // just for testing
+
+	cmdbox.Add("foo", "h|help")
+
 	h := cmdbox.Add("foo help")
-	h.Summary = "help for foo"
-
-	// will still fail since help method unimplemented
-	cmdbox.Execute("foo")
-
 	h.Method = func(args []string) error {
-		fmt.Println("would print foo help and exit")
+		fmt.Println("would show foo help")
 		return nil
 	}
 
-	// will call help method since foo has no method, yet
 	cmdbox.Execute("foo")
 
-	x.Method = func(args []string) error {
-		fmt.Println("would foo and then exit")
-		return nil
-	}
+	// Output:
+	// would show foo help
+	// unexpected call to os.Exit(0) during test
 
-	// will call foo method
-	cmdbox.Execute("foo")
+}
 
-	// completion context, will list all possible completions
+func ExampleExecute_completion_context() {
+
 	os.Setenv("COMP_LINE", "foo ")
+	cmdbox.Execute("foo")
+	os.Setenv("COMP_LINE", "foo he")
 	cmdbox.Execute("foo")
 	os.Unsetenv("COMP_LINE")
 
 	// Output:
-	// unimplemented: help
-	// unexpected call to os.Exit(0) during test
-	// unimplemented: help
-	// unexpected call to os.Exit(0) during test
-	// unimplemented: help
-	// unexpected call to os.Exit(0) during test
-	// would foo and then exit
-	// unexpected call to os.Exit(0) during test
 	// h
+	// help
+	// unexpected call to os.Exit(0) during test
 	// help
 	// unexpected call to os.Exit(0) during test
 

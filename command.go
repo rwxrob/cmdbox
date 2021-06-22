@@ -197,7 +197,7 @@ type Method func(args []string) error
 func NewCommand(name string, a ...string) *Command {
 	x := new(Command)
 	if !valid.Name(name) && name[len(name)-1] != '_' {
-		panic(Messages["invalid_name"])
+		SyntaxErrorPanic(fmt.Sprintf(Messages["invalid_name"], name))
 	}
 	x.Name = name
 	if len(a) > 0 {

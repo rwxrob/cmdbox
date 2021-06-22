@@ -43,7 +43,7 @@ func ExampleNewCommand_invalid() {
 	defer cmdbox.TrapPanic()
 	cmdbox.NewCommand("Foo") // see valid/name.go for more
 	// Output:
-	// invalid name (lower case words only)
+	// syntax error: invalid name (must be lowercase word): Foo
 }
 
 func ExampleNewCommand_dup() {

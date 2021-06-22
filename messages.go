@@ -29,12 +29,16 @@ package cmdbox
 // unwanted accidental conflict. See JSON and Load for more.
 var Messages = map[string]string{
 	"invalid_name":  m_invalid_name,
+	"syntax_error":  m_syntax_error,
 	"unimplemented": m_unimplemented,
 	"bad_type":      m_bad_type,
+	"missing_arg":   m_missing_arg,
 }
 
 const (
-	m_invalid_name  = "invalid name (lower case words only)"
+	m_invalid_name  = "invalid name (must be lowercase word): %v"
+	m_syntax_error  = "syntax error: %v"
 	m_unimplemented = "unimplemented: %v"
 	m_bad_type      = "unsupported type: %T"
+	m_missing_arg   = "missing argument for %v"
 )
