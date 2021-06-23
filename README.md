@@ -9,11 +9,16 @@
 > "It's like a modular, multicall BusyBox builder for Go with built in
 > completion and multi-lingual, embedded documentation support."
 
-*CmdBox* is a lightweight commander package focused on creating
-light-weight, self-contained, human-friendly terminal command-line
-interfaces composed of modular subcommands that can be imported as
-packages with portable completion and embedded, dynamic documentation
-compiled into a single, minimal, multicall binary.
+ > "The utility here is that cmdbox lets you
+ maintain your own personal 'toolbox' with built in auto-complete that
+ you can assemble from various Go modules. Individual commands are
+ isolated and unaware of each other and possibly maintained by other
+ people." (tadasv123)
+
+*CmdBox* is a lightweight commander for creating commands composed of
+modular subcommands that can be imported as packages with portable
+completion and embedded documentation compiled into a single, minimal,
+multicall binary.
 
 ## Installation
 
