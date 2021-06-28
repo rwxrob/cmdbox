@@ -52,6 +52,10 @@ type register struct {
 	sync.Mutex
 }
 
+// Main is always set to the main command that was used for Execute.
+// This can be useful from certain subcommands to query or call directly.
+var Main *Command
+
 // Reg provides direct access to the otherwise encapsulated and internal
 // register. This is to allow CmdBox composite command authors to more
 // fully control and manipulate the register directly but should be done
@@ -214,6 +218,17 @@ func (r *register) init() {
 // identified with Dups. Developer will know of such conflicts in advance
 // and be able to easily correct them by calling the Rename function
 // before Execute.
+//
+// Commands h|help and version Automatically Injected
+//
+// If h|help or version commands are not already included in the list of
+// Commands then they will be automatically appended to the very end of
+// the list and set to call the internal help (see help.go) and version
+// Commands (see version.go). These can still be overriden explicitly.
+// Note that the means any CmdBox module with any of its own Commands
+// will have a default automatically set to the first of the declared
+// Commands in the argument list. To make help the default, be sure to
+// explicitly add it as `h|help` for the first argument in the list.
 func Add(name string, a ...string) *Command {
 	var x *Command
 	for {
@@ -225,6 +240,12 @@ func Add(name string, a ...string) *Command {
 	}
 	x = NewCommand(name, a...)
 	reg.set(name, x)
+	if _, has := x.Commands["version"]; !has {
+		x.Add("version")
+	}
+	if _, has := x.Commands["help"]; !has {
+		x.Add("h|help")
+	}
 	return x
 }
 
@@ -512,6 +533,7 @@ func Resolve(caller *Command, name string, args []string) (Method,
 
 	// ultimately, this is where recursion stops (successfully)
 	if x.Method != nil {
+		x.Caller = caller
 		return x.Method, args
 	}
 
@@ -594,11 +616,11 @@ var executedAs = filepath.Base(os.Args[0])
 //     func main() { cmdbox.Execute() }
 //
 // Execute first determines the name of the command to be executed
-// (explicitly passed or inferred from multicall binary, see
-// ExecutedAs), traps all panics, and Calls the Command by name. If
-// completion context is detected (see comp.Yes), Execute calls
-// x.Complete instead of Calling it. Execute is gauranteed to always
-// exit the program cleanly. See Call, TrapPanic, and Command.
+// (explicitly passed or inferred from multicall binary, see ExecutedAs)
+// and assigns the command to cmdbox.Main. It traps all panics and Calls
+// the Command. If completion context is detected (see comp.Yes),
+// Execute calls x.Complete instead of Calling it. Execute is gauranteed
+// to always exit the program cleanly. See Call, TrapPanic, and Command.
 func Execute(a ...string) {
 	defer TrapPanic()
 	var name string
@@ -611,6 +633,7 @@ func Execute(a ...string) {
 	if x == nil {
 		ExitUnimplemented(name)
 	}
+	Main = x
 	if comp.Yes() {
 		x.Complete()
 		Exit()

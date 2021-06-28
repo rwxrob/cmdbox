@@ -163,21 +163,19 @@ import (
 type Command struct {
 	Name        string   `json:"name,omitempty" yaml:",omitempty"`
 	Summary     string   `json:"summary,omitempty" yaml:",omitempty"`
-	Version     string   `json:"version,omitempty" yaml:",omitempty"`
 	Usage       string   `json:"usage,omitempty" yaml:",omitempty"`
-	Description string   `json:"description,omitempty" yaml:",omitempty"`
-	Examples    string   `json:"examples,omitempty" yaml:",omitempty"`
-	SeeAlso     string   `json:"seealso,omitempty" yaml:",omitempty"`
-	Author      string   `json:"author,omitempty" yaml:",omitempty"`
-	Git         string   `json:"git,omitempty" yaml:",omitempty"`
-	Issues      string   `json:"issues,omitempty" yaml:",omitempty"`
+	Version     string   `json:"version,omitempty" yaml:",omitempty"`
 	Copyright   string   `json:"copyright,omitempty" yaml:",omitempty"`
 	License     string   `json:"license,omitempty" yaml:",omitempty"`
+	Description string   `json:"description,omitempty" yaml:",omitempty"`
+	Site        string   `json:"git,omitempty" yaml:",omitempty"`
+	Source      string   `json:"git,omitempty" yaml:",omitempty"`
+	Issues      string   `json:"issues,omitempty" yaml:",omitempty"`
 	Commands    Map      `json:"commands,omitempty" yaml:",omitempty"`
 	Params      []string `json:"params,omitempty" yaml:",omitempty"`
 	Default     string   `json:"default,omitempty" yaml:",omitempty"`
-	// Title
-	// VersionLine
+	// Title()
+	// Legal()
 	CompFunc   CompFunc `json:"-" yaml:"-"`
 	Caller     *Command `json:"-" yaml:"-"`
 	Method     Method   `json:"-" yaml:"-"`
@@ -210,29 +208,33 @@ func NewCommand(name string, a ...string) *Command {
 // Title returns a dynamic field of Name and Summary combined (if
 // exists).
 func (x *Command) Title() string {
-	if len(x.Summary) > 0 {
+	switch {
+	case len(x.Summary) > 0 && len(x.Version) > 0:
+		return x.Name + " (" + x.Version + ")" + " - " + x.Summary
+	case len(x.Summary) > 0:
 		return x.Name + " - " + x.Summary
+	default:
+		return x.Name
 	}
-	return x.Name
 }
 
-// VersionLine returns a single line with the combined values of the
+// Legal returns a single line with the combined values of the
 // Name, Version, Copyright, and License. If Version is empty or nil an
-// empty string is returned instead. VersionLine() is used by the
+// empty string is returned instead. Legal() is used by the
 // version builtin command to aggregate all the version information into
 // a single output.
-func (x *Command) VersionLine() string {
-	if x.Version == "" || x.Name == "" {
+func (x *Command) Legal() string {
+	switch {
+	case len(x.Copyright) > 0 && len(x.License) > 0 && len(x.Version) > 0:
+		return x.Name + " " + x.Version + "\n" +
+			x.Copyright + "\nLicense " + x.License
+	case len(x.Copyright) > 0 && len(x.License) > 0:
+		return x.Name + "\n" + x.Copyright + "\nLicense " + x.License
+	case len(x.Copyright) > 0:
+		return x.Name + "\n" + x.Copyright
+	default:
 		return ""
 	}
-	buf := x.Name + " " + x.Version
-	if x.Copyright != "" {
-		buf += " " + x.Copyright
-	}
-	if x.License != "" {
-		buf += " (" + x.License + ")"
-	}
-	return buf
 }
 
 // JSON is shortcut for json.Marshal(x). See util.ToJSON.
@@ -304,14 +306,8 @@ func (x *Command) Update(i interface{}) error {
 			x.Usage = val
 		case "Description", "description":
 			x.Description = val
-		case "Examples", "examples":
-			x.Examples = val
-		case "SeeAlso", "seealso":
-			x.SeeAlso = val
-		case "Author", "author":
-			x.Author = val
-		case "Git", "git":
-			x.Git = val
+		case "Source", "source":
+			x.Source = val
 		case "Issues", "issues":
 			x.Issues = val
 		case "Copyright", "copyright":
@@ -352,3 +348,51 @@ func (x *Command) Unimplemented(a string) error { return Unimplemented(a) }
 // UsageError is a convenience method that delegates calls to
 // cmdbox.UsageError.
 func (x *Command) UsageError() error { return UsageError(x) }
+
+// ------------------------------- help -------------------------------
+
+// Help returns a formatted string suitable for printing either to
+// a file or to an interactive terminal. For a more structured form of
+// the same information see YAML, JSON, Print, and PrintHelp.
+func (x Command) Help() string {
+	var buf string
+
+	buf += util.Emph("**NAME**", 0, -1) + "\n       " + x.Title() + "\n\n"
+	buf += util.Emph("**SYNOPSIS**", 0, -1) + "\n       " + x.Name + " " + x.Usage + "\n\n"
+
+	if len(x.Description) > 0 {
+		buf +=
+			util.Emph("**DESCRIPTION**", 0, -1) + "\n" +
+				util.Emph(x.Description, 7, 65) + "\n\n"
+	}
+
+	if x.Source != "" || x.Issues != "" || x.Site != "" {
+
+		buf += util.Emph("**LINKS**", 0, -1) + "\n"
+
+		if x.Site != "" {
+			buf += "       Site:   " + x.Site + "\n"
+		}
+
+		if x.Source != "" {
+			buf += "       Source: " + x.Source + "\n"
+		}
+
+		if x.Issues != "" {
+			buf += "       Issues: " + x.Issues + "\n"
+		}
+
+		buf += "\n"
+
+	}
+
+	if x.Copyright != "" {
+		buf += util.Emph("**LEGAL**", 0, -1) + "\n" + util.Indent(x.Legal(), 7) + "\n\n"
+	}
+
+	return buf
+
+}
+
+// PrintHelp simply prints what Help returns.
+func (x Command) PrintHelp() { fmt.Print(x.Help()) }
