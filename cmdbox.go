@@ -232,13 +232,17 @@ func Exit() { os.Exit(0) }
 func ExitError(err ...interface{}) {
 	switch e := err[0].(type) {
 	case string:
-		if len(err) > 1 {
+		if len(e) > 1 {
 			fmt.Printf(e+"\n", err[1:])
 		}
 		fmt.Println(e)
 	case error:
-		fmt.Printf("%v\n", e)
+		out := fmt.Sprintf("%v", e)
+		if len(out) > 0 {
+			fmt.Println(out)
+		}
 	}
+	os.Exit(1)
 }
 
 // ExitUnimplemented calls Unimplemented and calls ExitError().
@@ -281,7 +285,10 @@ var BadType = func(v interface{}) error {
 // user disambiguate significant output from just help and other error
 // output.
 var Harmless = func(msg ...string) error {
-	return fmt.Errorf("%v", msg)
+	if len(msg) > 0 {
+		return fmt.Errorf("%v", msg[0])
+	}
+	return fmt.Errorf("")
 }
 
 // MissingArg returns an error stating that the name of the parameter

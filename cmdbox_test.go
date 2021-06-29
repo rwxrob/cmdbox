@@ -348,3 +348,13 @@ func ExampleExecute_completion_Context_Version() {
 	// unexpected call to os.Exit(0) during test
 
 }
+
+/*
+func ExampleExitError_error() {
+	e := fmt.Errorf("error here")
+	cmdbox.ExitError(e)
+	cmdbox.ExitError("another error")
+	// Output:
+	// error here
+}
+*/
