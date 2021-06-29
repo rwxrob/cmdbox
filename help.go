@@ -1,6 +1,8 @@
 package cmdbox
 
-func init() {
+func init() { addHelp() }
+
+func addHelp() {
 	x := Add("help")
 	x.Usage = `[<name>]`
 	x.Summary = `display command help information`
@@ -16,31 +18,45 @@ func init() {
 		provided the help information for that specific command will be
 		provided instead. If no argument is passed will display help
 		information for the immediately preceeding command. By default this
-		command is added to all CmdBox commands as h|help.`
+		command is added to all CmdBox commands as h|help. The help command
+		always returns an error so as to not be confused with more
+		legitimate command output.`
 
 	x.Method = func(args []string) error {
+		var helpFor *Command
 
-		// foo help
-		_x := x.Caller
-		if _x == nil {
-			_x = Main
+		if len(args) > 0 {
+			potential := args[0]
+
+			// "foo help cmd" -> "foo cmd"
+			if x.Caller != nil {
+				qualified := x.Caller.Name + " " + potential
+				helpFor = Get(qualified)
+				if helpFor != nil {
+					helpFor.PrintHelp()
+					return Harmless()
+				}
+			}
+
+			// "help cmd" -> "cmd"
+			helpFor = Get(potential)
+			if helpFor != nil {
+				helpFor.PrintHelp()
+				return Harmless()
+			}
+
 		}
 
-		// foo help stuff
-		if len(args) > 0 {
-			_x = Get(args[0])
-			if _x == nil {
-				switch {
-				case x.Caller != nil:
-					_x = Get(x.Caller.Name + " " + args[0])
-				default:
-					_x = Get(Main.Name + " " + args[0])
-				}
+		// "foo help" -> "foo"
+		if x.Caller != nil {
+			helpFor = Get(x.Caller.Name)
+			if helpFor != nil {
+				helpFor.PrintHelp()
+				return Harmless()
 			}
 		}
 
-		_x.PrintHelp()
-		return nil
+		return CallerRequired()
 	}
 
 }

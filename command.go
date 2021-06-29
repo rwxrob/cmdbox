@@ -161,19 +161,19 @@ import (
 // * httpe://github.com/rwxrob/cmdbox-pomo
 //
 type Command struct {
-	Name        string   `json:"name,omitempty" yaml:",omitempty"`
-	Summary     string   `json:"summary,omitempty" yaml:",omitempty"`
-	Usage       string   `json:"usage,omitempty" yaml:",omitempty"`
-	Version     string   `json:"version,omitempty" yaml:",omitempty"`
-	Copyright   string   `json:"copyright,omitempty" yaml:",omitempty"`
-	License     string   `json:"license,omitempty" yaml:",omitempty"`
-	Description string   `json:"description,omitempty" yaml:",omitempty"`
-	Site        string   `json:"git,omitempty" yaml:",omitempty"`
-	Source      string   `json:"git,omitempty" yaml:",omitempty"`
-	Issues      string   `json:"issues,omitempty" yaml:",omitempty"`
-	Commands    Map      `json:"commands,omitempty" yaml:",omitempty"`
-	Params      []string `json:"params,omitempty" yaml:",omitempty"`
-	Default     string   `json:"default,omitempty" yaml:",omitempty"`
+	Name        string          `json:"name,omitempty" yaml:",omitempty"`
+	Summary     string          `json:"summary,omitempty" yaml:",omitempty"`
+	Usage       string          `json:"usage,omitempty" yaml:",omitempty"`
+	Version     string          `json:"version,omitempty" yaml:",omitempty"`
+	Copyright   string          `json:"copyright,omitempty" yaml:",omitempty"`
+	License     string          `json:"license,omitempty" yaml:",omitempty"`
+	Description string          `json:"description,omitempty" yaml:",omitempty"`
+	Site        string          `json:"git,omitempty" yaml:",omitempty"`
+	Source      string          `json:"git,omitempty" yaml:",omitempty"`
+	Issues      string          `json:"issues,omitempty" yaml:",omitempty"`
+	Commands    *util.StringMap `json:"commands,omitempty" yaml:",omitempty"`
+	Params      []string        `json:"params,omitempty" yaml:",omitempty"`
+	Default     string          `json:"default,omitempty" yaml:",omitempty"`
 	// Title()
 	// Legal()
 	CompFunc   CompFunc `json:"-" yaml:"-"`
@@ -194,14 +194,24 @@ type Method func(args []string) error
 // thrown if invalid.
 func NewCommand(name string, a ...string) *Command {
 	x := new(Command)
+
+	// panic unless valid command name
 	if !valid.Name(name) && name[len(name)-1] != '_' {
-		SyntaxErrorPanic(fmt.Sprintf(Messages["invalid_name"], name))
+		SyntaxErrorPanic(fmt.Sprintf(m_invalid_name, name))
 	}
+
+	// initialize command with internal h|help and version
 	x.Name = name
+	x.Commands = util.NewStringMap()
+	x.Add("version")
+	x.Add("h|help")
+	x.Default = "help"
+
+	// add any subcommands
 	if len(a) > 0 {
 		x.Add(a...)
-		x.Default = util.SplitBarPop(a[0])
 	}
+
 	return x
 }
 
@@ -265,58 +275,22 @@ func (x *Command) Add(sigs ...string) {
 	defer x.Unlock()
 	x.Lock()
 	if x.Commands == nil {
-		x.Commands = Map{}
+		x.Commands = util.NewStringMap()
 	}
 	for _, sig := range sigs {
 		aliases := strings.Split(sig, "|")
 		name := aliases[len(aliases)-1]
 		if !valid.Name(name) {
-			panic(Messages["invalid_name"])
+			panic(m_invalid_name)
 		}
-		x.Commands[name] = name
+		x.Commands.Set(name, name)
 		for _, alias := range aliases {
 			if !valid.Name(alias) {
-				panic(Messages["invalid_name"])
+				panic(m_invalid_name)
 			}
-			x.Commands[alias] = name
+			x.Commands.Set(alias, name)
 		}
 	}
-}
-
-// Update takes a map[string]interface{} or map[string]string and
-// updates any matching existing values to the new ones. Names can be in
-// upper or lower case. The folowing fields will never be changed: Name,
-// Commands, Params, Default. See cmdbox.Load.
-func (x *Command) Update(i interface{}) error {
-	m := make(map[string]string)
-
-	switch v := i.(type) {
-	case map[string]interface{}:
-		m = util.ToStringMap(v)
-	case map[string]string:
-		m = v
-	}
-	for name, val := range m {
-		switch name {
-		case "Summary", "summary":
-			x.Summary = val
-		case "Version", "version":
-			x.Version = val
-		case "Usage", "usage":
-			x.Usage = val
-		case "Description", "description":
-			x.Description = val
-		case "Source", "source":
-			x.Source = val
-		case "Issues", "issues":
-			x.Issues = val
-		case "Copyright", "copyright":
-			x.Copyright = val
-		case "License", "license":
-			x.License = val
-		}
-	}
-	return nil
 }
 
 // Complete prints the possible strings based on the current Command and
@@ -396,3 +370,32 @@ func (x Command) Help() string {
 
 // PrintHelp simply prints what Help returns.
 func (x Command) PrintHelp() { fmt.Print(x.Help()) }
+
+// ResolveDelegate returns a Command pointer looked up from the internal
+// register based on the following priority from more
+//
+//   1. x.Caller.Name + " " + arg[0] as name
+//   2. cmdbox.Main.Name + " " + arg[0] as name
+//   3. arg[0] as name
+//
+// This is useful for Commands that are designed to operate on other
+// Commands in the registry. See Help and Legal for examples.
+//
+func (x *Command) ResolveDelegate(args []string) *Command {
+	var xx *Command
+
+	if x.Caller != nil {
+		xx = Get(x.Caller.Name + " " + args[0])
+		if xx != nil {
+			return xx
+		}
+	}
+
+	xx = Get(Main.Name + " " + args[0])
+	if xx != nil {
+		return xx
+	}
+
+	return Get(args[0])
+
+}

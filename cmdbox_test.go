@@ -19,344 +19,164 @@ package cmdbox_test
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/rwxrob/cmdbox"
 )
 
 func ExampleReg() {
 	cmdbox.Init() // just for testing
-
-	m := cmdbox.Reg()
-	fmt.Println(m)
-	m["foo"] = cmdbox.NewCommand("foo")
-	cmdbox.PrintReg()
-
+	fmt.Println(cmdbox.Reg.Names())
 	// Output:
-	// map[]
-	// foo:
-	//     name: foo
-
+	// [help version]
 }
 
 func ExampleJSON() {
 	cmdbox.Init() // just for testing
-
 	fmt.Println(cmdbox.JSON())
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.JSON())
-
-	// Output:
-	// {"commands":{},"messages":{"bad_type":"unsupported type: %T","invalid_name":"invalid name (must be lowercase word): %v","missing_arg":"missing argument for %v","syntax_error":"syntax error: %v","unimplemented":"unimplemented: %v"}}
-	// {"commands":{"foo":{"name":"foo"}},"messages":{"bad_type":"unsupported type: %T","invalid_name":"invalid name (must be lowercase word): %v","missing_arg":"missing argument for %v","syntax_error":"syntax error: %v","unimplemented":"unimplemented: %v"}}
-
 }
 
 func ExampleYAML() {
 	cmdbox.Init() // just for testing
-
 	cmdbox.Add("foo")
 	fmt.Print(cmdbox.YAML())
-
-	// Output:
-	// commands:
-	//     foo:
-	//         name: foo
-	// messages:
-	//     bad_type: 'unsupported type: %T'
-	//     invalid_name: 'invalid name (must be lowercase word): %v'
-	//     missing_arg: missing argument for %v
-	//     syntax_error: 'syntax error: %v'
-	//     unimplemented: 'unimplemented: %v'
-
 }
 
 func ExampleInit() {
 	cmdbox.Init() // just for testing
-
+	fmt.Println(cmdbox.Names())
 	cmdbox.Add("foo")
-	cmdbox.PrintReg()
-
-	fmt.Println("-----")
-
+	fmt.Println(cmdbox.Names())
 	cmdbox.Init()
-	cmdbox.PrintReg()
+	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// foo:
-	//     name: foo
-	// -----
-	// {}
+	// [help version]
+	// [foo help version]
+	// [help version]
 
 }
 
 func ExampleAdd_simple() {
 	cmdbox.Init() // just for testing
-
 	cmdbox.Add("foo")
-	cmdbox.PrintReg()
+	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// foo:
-	//     name: foo
+	// [foo help version]
+}
+
+func ExampleAdd_with_Subcommands() {
+	cmdbox.Init() // just for testing
+	cmdbox.Add("foo")
+	cmdbox.Add("foo bar")
+	fmt.Println(cmdbox.Names())
+
+	// Output:
+	// [foo foo bar help version]
 
 }
 
-func ExampleAdd_with_subcommands() {
+func ExampleAdd_with_Duplicates() {
 	cmdbox.Init() // just for testing
-
-	cmdbox.Add("foo", "h|help")
-	cmdbox.Add("foo help")
-	cmdbox.PrintReg()
-
-	// Output:
-	// foo:
-	//     name: foo
-	//     commands:
-	//         h: help
-	//         help: help
-	//     default: help
-	// foo help:
-	//     name: foo help
-
-}
-
-func ExampleAdd_with_duplicates() {
-	cmdbox.Init() // just for testing
-
-	cmdbox.Add("foo", "h|help")
-	cmdbox.Add("foo", "h|help")
+	cmdbox.Add("foo")
+	cmdbox.Add("foo")
 	fmt.Println(cmdbox.Dups())
-	cmdbox.PrintReg()
+	fmt.Println(cmdbox.Names())
 
 	// Output:
 	// [foo_]
-	// foo:
-	//     name: foo
-	//     commands:
-	//         h: help
-	//         help: help
-	//     default: help
-	// foo_:
-	//     name: foo_
-	//     commands:
-	//         h: help
-	//         help: help
-	//     default: help
+	// [foo foo_ help version]
 
 }
 
 func ExampleNames() {
 	cmdbox.Init() // just for testing
-
 	cmdbox.Add("foo")
 	cmdbox.Add("bar")
-
 	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// [bar foo]
+	// [bar foo help version]
 
 }
 
 func ExampleRename() {
 	cmdbox.Init() // just for testing
-
-	cmdbox.Add("foo", "h|help")
-	cmdbox.Add("foo", "h|help")
-
+	cmdbox.Add("foo")
+	cmdbox.Add("foo")
 	cmdbox.Rename("foo_", "bar")
-	cmdbox.PrintReg()
+	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// bar:
-	//     name: bar
-	//     commands:
-	//         h: help
-	//         help: help
-	//     default: help
-	// foo:
-	//     name: foo
-	//     commands:
-	//         h: help
-	//         help: help
-	//     default: help
-
-}
-
-func ExampleLoad() {
-	cmdbox.Init() // just for testing
-
-	cmdbox.Add("foo", "h|help")
-	cmdbox.Add("foo help")
-
-	buf := strings.NewReader(`
-commands:
-    foo:
-        usage: '[h|help]'
-        summary: some summary
-        description: some description
-    foo help:
-        summary: display foo help
-messages:
-    new message: this is new
-    unimplemented: nope, don't have this yet
-`)
-
-	err := cmdbox.Load(buf)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	cmdbox.Print()
-
-	// Output:
-	// commands:
-	//     foo:
-	//         name: foo
-	//         summary: some summary
-	//         usage: '[h|help]'
-	//         description: some description
-	//         commands:
-	//             h: help
-	//             help: help
-	//         default: help
-	//     foo help:
-	//         name: foo help
-	//         summary: display foo help
-	// messages:
-	//     bad_type: 'unsupported type: %T'
-	//     invalid_name: 'invalid name (must be lowercase word): %v'
-	//     missing_arg: missing argument for %v
-	//     new message: this is new
-	//     syntax_error: 'syntax error: %v'
-	//     unimplemented: nope, don't have this yet
-
-}
-
-func ExampleLoadFS() {
-	cmdbox.Init() // just for testing
-
-	cmdbox.Add("foo", "h|help")
-	cmdbox.Add("foo help")
-
-	cmdbox.LoadFS(os.DirFS("testdata"), "loadfs.yaml")
-	cmdbox.Print()
-
-	// Output:
-	// commands:
-	//     foo:
-	//         name: foo
-	//         summary: some summary
-	//         usage: '[h|help]'
-	//         description: some description
-	//         commands:
-	//             h: help
-	//             help: help
-	//         default: help
-	//     foo help:
-	//         name: foo help
-	//         summary: display foo help
-	// messages:
-	//     bad_type: 'unsupported type: %T'
-	//     invalid_name: 'invalid name (must be lowercase word): %v'
-	//     missing_arg: missing argument for %v
-	//     new message: this is new
-	//     syntax_error: 'syntax error: %v'
-	//     unimplemented: nope, don't have this yet
+	// [bar foo help version]
 
 }
 
 func ExampleGet() {
 	cmdbox.Init() // just for testing
-
-	cmdbox.Add("foo", "h|help")
+	cmdbox.Add("foo", "bar")
 	cmdbox.Get("foo").Print()
 
 	// Output:
 	// name: foo
 	// commands:
+	//     bar: bar
 	//     h: help
 	//     help: help
+	//     version: version
 	// default: help
 }
 
 func ExampleSlice() {
 	cmdbox.Init() // just for testing
-
-	cmdbox.Add("foo", "h|help")
+	cmdbox.Add("foo")
 	cmdbox.Add("foo help")
 	cmdbox.Add("bar")
-
-	cmds := cmdbox.Slice("foo", "bar")
-	fmt.Println(cmds)
+	for _, x := range cmdbox.Slice("foo", "bar") {
+		fmt.Println(x.Name)
+	}
 
 	// Output:
-	// [{"name":"foo","commands":{"h":"help","help":"help"},"default":"help"} {"name":"bar"}]
+	// foo
+	// bar
 
 }
 
 func ExampleSet() {
 	cmdbox.Init() // just for testing
-
 	foo := cmdbox.NewCommand("foo")
 	cmdbox.Set("foo", foo)
-	cmdbox.PrintReg()
-
-	fmt.Println("-----")
-
 	bar := cmdbox.NewCommand("bar")
 	cmdbox.Set("bar", bar)
-	cmdbox.PrintReg()
-
-	fmt.Println("-----")
-
 	cmdbox.Set("bar", foo)
-	cmdbox.PrintReg()
+	newbar := cmdbox.Get("bar")
+	fmt.Println(newbar.Name)
 
 	// Output:
-	// foo:
-	//     name: foo
-	// -----
-	// bar:
-	//     name: bar
-	// foo:
-	//     name: foo
-	// -----
-	// bar:
-	//     name: foo
-	// foo:
-	//     name: foo
+	// foo
 }
 
 func ExampleDelete() {
 	cmdbox.Init() // just for testing
-
 	cmdbox.Add("foo")
 	cmdbox.Add("bar")
-	cmdbox.PrintReg()
-	fmt.Println("-----")
-
+	fmt.Println(cmdbox.Names())
 	cmdbox.Delete("bar")
-	cmdbox.PrintReg()
+	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// bar:
-	//     name: bar
-	// foo:
-	//     name: foo
-	// -----
-	// foo:
-	//     name: foo
+	// [bar foo help version]
+	// [foo help version]
 
 }
 
 func ExampleResolve() {
 	cmdbox.Init() // just for testing
+	defer cmdbox.TrapPanic()
 
-	gr := cmdbox.Add("greet", "h|help", "fr|french", "ru|russian")
+	gr := cmdbox.Add("greet", "fr|french", "ru|russian")
 	gr.Summary = "main greet composite, no method"
 
 	fr := cmdbox.Add("greet french")
@@ -371,21 +191,14 @@ func ExampleResolve() {
 		return nil
 	}
 
-	h := cmdbox.Add("help")
-	h.Summary = "lonely, useless, help"
-	h.Method = func(args []string) error {
-		fmt.Printf("help")
-		return nil
-	}
-
 	tests := []struct {
 		caller *cmdbox.Command
 		name   string
 		args   []string
 	}{
-		{nil, "greet", nil},
-		{nil, "greet", []string{"h"}},
-		{nil, "greet", []string{"hi"}},
+		{nil, "greet", nil},            // usage
+		{nil, "greet", []string{"h"}},  // usage
+		{nil, "greet", []string{"hi"}}, // usage
 		{nil, "greet russian", []string{"hi"}},
 		{gr, "russian", []string{"hi"}},
 	}
@@ -394,22 +207,22 @@ func ExampleResolve() {
 		method, args := cmdbox.Resolve(t.caller, t.name, t.args)
 		if method != nil {
 			method(args)
-			fmt.Printf(" %v %q\n", t.name, args)
+			fmt.Printf("%v %q\n", t.name, args)
 			continue
 		}
 		fmt.Printf("failed: %v %q\n", t.name, t.args)
 	}
 
 	// Output:
-	// help greet []
-	// help greet []
-	// help greet ["hi"]
-	// Privyet greet russian ["hi"]
-	// Privyet russian ["hi"]
+	// greet []
+	// greet []
+	// greet ["hi"]
+	// Privyetgreet russian ["hi"]
+	// Privyetrussian ["hi"]
 
 }
 
-func ExampleCall_nil_caller() {
+func ExampleCall_nil_Caller() {
 	cmdbox.Init() // just for testing
 
 	x := cmdbox.Add("greet")
@@ -426,7 +239,7 @@ func ExampleCall_nil_caller() {
 
 }
 
-func ExampleCall_caller_subcommand() {
+func ExampleCall_caller_Subcommand() {
 	cmdbox.Init() // just for testing
 
 	caller := cmdbox.Add("foo", "h|help")
@@ -449,10 +262,14 @@ func ExampleCall_caller_subcommand() {
 
 }
 
-func ExampleExecute_no_method() {
+func ExampleExecute_no_Method() {
 	cmdbox.Init() // just for testing
+	x := cmdbox.Get("help")
+	x.Method = func(args []string) error {
+		return x.Unimplemented("foo")
+	}
 
-	cmdbox.Add("foo", "h|help")
+	cmdbox.Add("foo")
 	cmdbox.Execute("foo")
 
 	// Output:
@@ -461,20 +278,23 @@ func ExampleExecute_no_method() {
 
 }
 
-func ExampleExecute_unimplemented_default() {
+func ExampleExecute_unimplemented_Default() {
 	cmdbox.Init() // just for testing
+	x := cmdbox.Get("help")
+	x.Method = func(args []string) error {
+		return x.UsageError()
+	}
 
-	cmdbox.Add("foo", "h|help")
-	cmdbox.Add("foo help")
+	cmdbox.Add("foo")
 	cmdbox.Execute("foo")
 
 	// Output:
-	// unimplemented: foo
+	// usage: help [<name>]
 	// unexpected call to os.Exit(0) during test
 
 }
 
-func ExampleExecute_first_is_default() {
+func ExampleExecute_first_Is_Default() {
 	cmdbox.Init() // just for testing
 
 	cmdbox.Add("foo", "h|help")
@@ -493,19 +313,38 @@ func ExampleExecute_first_is_default() {
 
 }
 
-func ExampleExecute_completion_context() {
+func ExampleExecute_completion_Context_Space() {
 
 	os.Setenv("COMP_LINE", "foo ")
 	cmdbox.Execute("foo")
-	os.Setenv("COMP_LINE", "foo he")
+
+	// Output:
+	// h
+	// help
+	// version
+	// unexpected call to os.Exit(0) during test
+
+}
+
+func ExampleExecute_completion_Context_Help() {
+
+	os.Setenv("COMP_LINE", "foo h")
 	cmdbox.Execute("foo")
-	os.Unsetenv("COMP_LINE")
 
 	// Output:
 	// h
 	// help
 	// unexpected call to os.Exit(0) during test
-	// help
+
+}
+
+func ExampleExecute_completion_Context_Version() {
+
+	os.Setenv("COMP_LINE", "foo ver")
+	cmdbox.Execute("foo")
+
+	// Output:
+	// version
 	// unexpected call to os.Exit(0) during test
 
 }

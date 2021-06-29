@@ -22,97 +22,49 @@ package cmdbox
 
 import (
 	"fmt"
-	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
-	"sync"
 
 	"github.com/rwxrob/cmdbox/comp"
-	"github.com/rwxrob/cmdbox/util"
-	"gopkg.in/yaml.v3"
 )
 
-var state = map[string]interface{}{
-	"commands": reg.reg,
-	"messages": Messages,
-}
-
-var reg = func() *register {
-	r := new(register)
-	r.init()
-	return r
-}()
-
-var mut sync.Mutex
-
-type register struct {
-	reg map[string]*Command
-	sync.Mutex
-}
+const (
+	m_invalid_name   = "invalid name (must be lowercase word): %v"
+	m_syntax_error   = "syntax error: %v"
+	m_unimplemented  = "unimplemented: %v"
+	m_bad_type       = "unsupported type: %T"
+	m_missing_arg    = "missing argument for %v"
+	m_missing_caller = "requires caller"
+)
 
 // Main is always set to the main command that was used for Execute.
 // This can be useful from certain subcommands to query or call directly.
 var Main *Command
 
-// Reg provides direct access to the otherwise encapsulated and internal
-// register. This is to allow CmdBox composite command authors to more
-// fully control and manipulate the register directly but should be done
-// with caution. Always provide some safety (mutex, etc.) for
-// concurrency when reading or writing to the returned map.
-func Reg() map[string]*Command { return reg.reg }
+// Reg contains the Commands register. See CommandMap and Add.
+var Reg = NewCommandMap()
 
-// JSON serializes the current state of the cmdbox package with its
-// internal message set, register and every Command in it as JSON which
-// can then be used to present documentation of the composite command in
-// different forms. Also see YAML and Load for a way to overwrite this
-// data in such a way as to provide dynamic language and locale
-// detection and adjustments. Empty values are always omitted.
-func JSON() string { return util.ToJSON(state) }
+// JSON serializes the current internal package register of commands as
+// JSON which can then be used to present documentation of the composite
+// command in different forms. Also see YAML. Empty values are always omitted.
+func JSON() string { return Reg.JSON() }
 
-// YAML serializes the current state of the cmdbox package with its
-// internal message set, register and every Command in it as YAML which
-// can then be used to present documentation of the composite command in
-// different forms. See Load for a way to overwrite this data in such
-// a way as to provide dynamic language and locale detection and
-// adjustments. Empty values are always omitted.
-func YAML() string { return util.ToYAML(state) }
+// YAML serializes the current internal package register of commands as
+// YAML which can then be used to present documentation of the composite
+// command in different forms. Empty values are always omitted.
+func YAML() string { return Reg.YAML() }
 
 // Print is shortcut for fmt.Println(cmdbox.YAML()) which is mostly only
 // useful during testing.
-func Print() { fmt.Print(YAML()) }
-
-// PrintReg is shortcut for util.PrintYAML(cmdbox.Reg()) which is mostly
-// only useful during testing.
-func PrintReg() { util.PrintYAML(reg.reg) }
+func Print() { Reg.Print() }
 
 // Init initializes (or re-initialized) the package status and empties
-// the internal commands register (without changing its reference) and
-// sets the standard Messages back to defaults (but does not override
-// any newly added Messages). Init is primarily intended for testing to
-// reset the cmdbox package.
+// the internal commands register (without changing its reference).
+// Init is primarily intended for testing to reset the cmdbox package.
 func Init() {
-	defer mut.Unlock()
-	mut.Lock()
-	reg.init()
-	Messages["invalid_name"] = m_invalid_name
-	Messages["unimplemented"] = m_unimplemented
-	Messages["syntax_error"] = m_syntax_error
-	Messages["missing_arg"] = m_missing_arg
-	Messages["bad_type"] = m_bad_type
-}
-
-func (r *register) init() {
-	defer r.Unlock()
-	r.Lock()
-	if r.reg == nil {
-		r.reg = map[string]*Command{}
-		return
-	}
-	for k := range r.reg {
-		delete(r.reg, k)
-	}
+	Reg.Init()
+	addHelp()
+	addVersion()
 }
 
 // Add creates a new Command, adds it to the internal register, and
@@ -151,11 +103,12 @@ func (r *register) init() {
 //
 // Any variadic arguments that follow will be directly passed to
 // x.Add(). This provides a succinct summary of how the command may be
-// called. The first in the list will be assigned to x.Default, but can
-// be overridden with a direct assignment later.
+// called. The h|help and version commands are added automatically to
+// all Commands with help being set to the x.Default (which can be
+// overriden).
 //
-//    x := cmdbox.New("foo", "help")
-//    // x.Default == "help"
+//    x := cmdbox.New("foo", "bar")
+//    // x.Default == "bar"
 //
 // Subcommands May Have Aliases
 //
@@ -163,9 +116,7 @@ func (r *register) init() {
 // than just a name) meaning it may have one or more aliases prefixed
 // and bar-delimited which are added to the x.Commands Map:
 //
-//    x := cmdbox.New("foo", "h|help")
-//    // x.Default == "help"
-//    // x.Commands == {"h":"help","help":"help"}
+//    x := cmdbox.New("foo", "b|bar")
 //
 // Command Method Has Priority
 //
@@ -201,10 +152,11 @@ func (r *register) init() {
 //
 // Add does not validate that a potential command has been registered
 // because the state of the internal register cannot be predicted at the
-// specific time any init if called. Not all Commands may yet have been
-// registered before any other Add is called. This means runtime testing
-// is required to check for errant calls to unregistered Commands (which
-// otherwise produce a relatively harmless "unimplemented" error.)
+// specific time any init function is called. Not all Commands may yet
+// have been registered before any other Add is called. This means
+// runtime testing is required to check for errant calls to unregistered
+// Commands (which otherwise produce a relatively harmless
+// "unimplemented" error.)
 //
 // Duplicate Names Append Underscore
 //
@@ -219,63 +171,27 @@ func (r *register) init() {
 // and be able to easily correct them by calling the Rename function
 // before Execute.
 //
-// Commands h|help and version Automatically Injected
-//
-// If h|help or version commands are not already included in the list of
-// Commands then they will be automatically appended to the very end of
-// the list and set to call the internal help (see help.go) and version
-// Commands (see version.go). These can still be overriden explicitly.
-// Note that the means any CmdBox module with any of its own Commands
-// will have a default automatically set to the first of the declared
-// Commands in the argument list. To make help the default, be sure to
-// explicitly add it as `h|help` for the first argument in the list.
 func Add(name string, a ...string) *Command {
 	var x *Command
 	for {
-		x = reg.get(name)
+		x = Reg.Get(name)
 		if x == nil {
 			break
 		}
 		name = name + "_"
 	}
 	x = NewCommand(name, a...)
-	reg.set(name, x)
-	if _, has := x.Commands["version"]; !has {
-		x.Add("version")
-	}
-	if _, has := x.Commands["help"]; !has {
-		x.Add("h|help")
-	}
+	Reg.Set(name, x)
 	return x
 }
 
 // Names returns a sorted list of all Command names in the internal
 // register.
-func Names() []string {
-	names := []string{}
-	for name, _ := range reg.reg {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	return names
-}
+func Names() []string { return Reg.Names() }
 
 // Dups returns key strings of duplicates (which can then be easily
 // renamed). Keys are sorted in lexicographic order. See Rename.
-func Dups() []string { return reg.dups() }
-
-func (r *register) dups() []string {
-	defer r.Unlock()
-	r.Lock()
-	var keys []string
-	for k, _ := range r.reg {
-		if k[len(k)-1] == '_' {
-			keys = append(keys, k)
-		}
-	}
-	sort.Strings(keys)
-	return keys
-}
+func Dups() []string { return Reg.Dups() }
 
 // Rename renames a Command in the Register by adding the
 // new name with the same *Command and deleting the old one. This is
@@ -285,115 +201,16 @@ func (r *register) dups() []string {
 // Note the order of init() execution --- while predictable --- is not
 // always apparent.  When in doubt do Rename from main() to be sure.
 // Rename is safe for concurrency.
-func Rename(from, to string) { reg.rename(from, to) }
-
-func (r *register) rename(from, to string) {
-	if to == "" || from == "" {
-		return
-	}
-	x, has := r.reg[from]
-	if !has {
-		return
-	}
-	r.Lock()
-	x.Name = to
-	r.reg[to] = x
-	delete(r.reg, from)
-	r.Unlock()
-}
-
-// Load buffers the input and unmarshals it into the package scope over
-// any existing matches for the package state including the internal
-// Messages and Commands. Input must be valid YAML data (which includes
-// JSON). This allows CmdBox composites to dynamically adapt to language
-// and locale. Attempts to load Command data that has not already been
-// registered (with Add or Set) will silently fail. Messages will always
-// be unmarshaled as is so that authors can add their own. See JSON,
-// YAML, Command.Update, and String as well.
-func Load(in interface{}) error {
-	var buf []byte
-	var err error
-	switch v := in.(type) {
-	case io.Reader:
-		buf, err = io.ReadAll(v)
-		if err != nil {
-			return err
-		}
-	case []byte:
-		buf = v
-	default:
-		return BadType(v)
-	}
-	m := map[string]interface{}{}
-	err = yaml.Unmarshal(buf, &m)
-	if err != nil {
-		return err
-	}
-	if v, has := m["messages"]; has {
-		mut.Lock()
-		for k, v := range v.(map[string]interface{}) {
-			Messages[k] = v.(string)
-		}
-		mut.Unlock()
-	}
-	if v, has := m["commands"]; has {
-		for name, cmd := range reg.reg {
-			if i, has := v.(map[string]interface{})[name]; has {
-				cmd.Update(i)
-			}
-		}
-	}
-	return nil
-}
-
-// LoadFS loads the specified file from the filesystem passed. Any
-// filesystem that satisfies the FS interface from io/fs will work. This
-// includes local files, files transferred over HTTP, and embeds. For
-// example, multiple language/locale files could be embedded into the
-// binary at compilation time to be used after locale detection. The
-// method of detection, however, is left to the caller rather than
-// implied. Also see the go:embed compiler directive for ways to ship
-// single executables with multi-lingual/-locale support.  The util
-// subpackage of this module may also contain helpful tools for
-// determining locale and such to help identify which file to pass. See
-// Load for more.
-func LoadFS(fsys fs.FS, file string) error {
-	buf, err := fs.ReadFile(fsys, file)
-	if err != nil {
-		return err
-	}
-	return Load(buf)
-}
+func Rename(from, to string) { Reg.Rename(from, to) }
 
 // Get returns the *Command for key name if found.
-func Get(name string) *Command { return reg.get(name) }
-
-func (r *register) get(name string) *Command {
-	defer r.Unlock()
-	r.Lock()
-	if x, has := r.reg[name]; has {
-		return x
-	}
-	return nil
-}
+func Get(name string) *Command { return Reg.Get(name) }
 
 // Slice returns a slice of *Command pointers and fetched from the
 // internal register that match the key names passed.  If an entry is
 // not found it is simply skipped. Will return an empty slice if none
 // found.
-func Slice(names ...string) []*Command { return reg.slice(names) }
-
-func (r *register) slice(names []string) []*Command {
-	defer r.Unlock()
-	r.Lock()
-	cmds := []*Command{}
-	for _, name := range names {
-		if x, has := r.reg[name]; has {
-			cmds = append(cmds, x)
-		}
-	}
-	return cmds
-}
+func Slice(names ...string) []*Command { return Reg.Slice(names...) }
 
 // Set the internal register for the given key to the given *Command
 // pointer in a way that is safe for concurrency. Replaces entries that
@@ -401,24 +218,10 @@ func (r *register) slice(names []string) []*Command {
 // refer to commands that have an actual x.Name that differs from the
 // key this is discouraged, which is why Add and Rename should generally
 // be used instead. Also see Add and Get.
-func Set(name string, x *Command) { reg.set(name, x) }
-
-func (r *register) set(name string, x *Command) {
-	defer r.Unlock()
-	r.Lock()
-	r.reg[name] = x
-}
+func Set(name string, x *Command) { Reg.Set(name, x) }
 
 // Delete deletes one or more commands from the internal register.
-func Delete(names ...string) { reg.del(names) }
-
-func (r *register) del(names []string) {
-	defer r.Unlock()
-	r.Lock()
-	for _, k := range names {
-		delete(r.reg, k)
-	}
-}
+func Delete(names ...string) { Reg.Delete(names...) }
 
 // ---------------------- exit and error handling ---------------------
 
@@ -457,34 +260,53 @@ var TrapPanic = func() {
 // init and main methods to change behavior for everthing in the
 // composite command. See "unimplemented" in Messages.
 var Unimplemented = func(a string) error {
-	return fmt.Errorf(Messages["unimplemented"], a)
+	return fmt.Errorf(m_unimplemented, a)
 }
 
 // UsageError returns an error containing the usage string suitable for
 // printing directly.  This function may be overriden by CmdBox command
 // modules from their init and main methods to change behavior for
 // everthing in the composite command.
-var UsageError = func(x *Command) error { return fmt.Errorf(x.Usage) }
+var UsageError = func(x *Command) error {
+	return fmt.Errorf("usage: %v %v", x.Name, x.Usage)
+}
 
 // BadType returns an error containing the bad type attempted.
 var BadType = func(v interface{}) error {
-	return fmt.Errorf(Messages["bad_type"], v)
+	return fmt.Errorf(m_bad_type, v)
+}
+
+// Harmless returns an error that is mostly designed to trigger an error
+// exit status. This is useful for help and commands like it to help the
+// user disambiguate significant output from just help and other error
+// output.
+var Harmless = func(msg ...string) error {
+	return fmt.Errorf("%v", msg)
 }
 
 // MissingArg returns an error stating that the name of the parameter
 // for which no argument was found.
 var MissingArg = func(name string) error {
-	return fmt.Errorf(Messages["missing_arg"], name)
+	return fmt.Errorf(m_missing_arg, name)
 }
 
 // SyntaxErrorPanic panics with the message stating the problem.
 var SyntaxErrorPanic = func(msg string) {
-	panic(fmt.Sprintf(Messages["syntax_error"], msg))
+	panic(fmt.Sprintf(m_syntax_error, msg))
 }
 
 // SyntaxError returns an error with the message stating the problem.
 var SyntaxError = func(msg string) error {
-	return fmt.Errorf(Messages["syntax_error"], msg)
+	return fmt.Errorf(m_syntax_error, msg)
+}
+
+// CallerRequired retuns an error indicating a Command was used
+// incorrectly (as designed by the developer) and that is requires being
+// called from something else. CmdBox command modules that cannot be
+// used as standalones are examples that would have an x.Method that
+// might return this error.
+var CallerRequired = func() error {
+	return fmt.Errorf(m_missing_caller)
 }
 
 // --------------------- resolve / call / execute ---------------------
@@ -516,31 +338,38 @@ var SyntaxError = func(msg string) error {
 // package itself. See Call, Command, ExampleResolve for more.
 func Resolve(caller *Command, name string, args []string) (Method,
 	[]string) {
-	x := reg.get(name)
+	var x *Command
 
-	// override with fully qualified, if found
+	// fully qualified, if found
 	if caller != nil {
-		full := reg.get(caller.Name + " " + name)
+		full := Reg.Get(caller.Name + " " + name)
 		if full != nil {
 			x = full
 		}
 	}
 
-	// nothing to even start from, bailing
+	// plain
+	if x == nil {
+		x = Reg.Get(name)
+	}
+
+	// nothing at all, we're done here
 	if x == nil {
 		return nil, args
 	}
 
+	// so that Commands know their caller
+	x.Caller = caller
+
 	// ultimately, this is where recursion stops (successfully)
 	if x.Method != nil {
-		x.Caller = caller
 		return x.Method, args
 	}
 
 	// check if the first argument is a command with Method
 	if len(args) > 0 {
 		first := args[0]
-		if cmd, has := x.Commands[first]; has {
+		if cmd := x.Commands.Get(first); cmd != "" {
 			name = name + " " + cmd
 			method, margs := Resolve(caller, name, args[1:])
 			if method != nil {
@@ -629,7 +458,7 @@ func Execute(a ...string) {
 	} else {
 		name = executedAs
 	}
-	x := reg.get(name)
+	x := Reg.Get(name)
 	if x == nil {
 		ExitUnimplemented(name)
 	}
@@ -638,7 +467,7 @@ func Execute(a ...string) {
 		x.Complete()
 		Exit()
 	}
-	err := Call(nil, name, os.Args[1:])
+	err := Call(x, name, os.Args[1:])
 	if err != nil {
 		ExitError(err)
 	}

@@ -49,10 +49,10 @@ func CompleteCommand(x *Command) []string {
 		return rv
 	}
 	word := comp.Word()
-	for k, _ := range x.Commands {
-		if word == " " || strings.HasPrefix(k, word) {
-			rv = append(rv, k)
-		}
+	if word == " " {
+		rv = append(rv, x.Commands.Keys()...)
+	} else {
+		rv = append(rv, x.Commands.HasPrefix(word).Keys()...)
 	}
 	for _, k := range x.Params {
 		if word == " " || strings.HasPrefix(k, word) {

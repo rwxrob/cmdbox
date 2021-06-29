@@ -9,7 +9,7 @@ func TestEmphasize(t *testing.T) {
 		italic + "Italic" + reset,
 		bold + "Bold" + reset,
 		bolditalic + "BoldItalic" + reset,
-		underline + "BRACKETED" + reset,
+		"<" + underline + "bracketed" + reset + ">",
 	}
 	args := []string{"*Italic*", "**Bold**", "***BoldItalic***", "<bracketed>"}
 	for i, arg := range args {
@@ -35,7 +35,7 @@ func TestEmph(t *testing.T) {
     Let's try a hard  
     return.`
 
-	want := "     Something " + italic + "easy" + reset + " to write here that can be indented however\n     you like and wrapped and have each line indented and with\n     " + underline + "CODE" + reset + ":\n     \n         This will not be messed with.\n         Nor this.\n     \n     So it's a lot like a " + bold + "simple" + reset + " version of Markdown that only\n     supports what is likely going to be used in stuff similar to\n     man pages.\n     \n     Let's try a hard\n     return."
+	want := "     Something " + italic + "easy" + reset + " to write here that can be indented however\n     you like and wrapped and have each line indented and with\n     <" + underline + "code" + reset + ">:\n     \n         This will not be messed with.\n         Nor this.\n     \n     So it's a lot like a " + bold + "simple" + reset + " version of Markdown that only\n     supports what is likely going to be used in stuff similar to\n     man pages.\n     \n     Let's try a hard\n     return."
 
 	got := Emph(text, 5, 70)
 	t.Log("\n" + got)

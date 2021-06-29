@@ -2,7 +2,9 @@ package cmdbox
 
 import "fmt"
 
-func init() {
+func init() { addVersion() }
+
+func addVersion() {
 	x := Add("version")
 	x.Usage = `[<subcmd>]`
 	x.Summary = `provide version and legal information`
@@ -24,7 +26,7 @@ func init() {
 		}
 		subcmd := Get(args[0])
 		if subcmd == nil {
-			fmt.Println(Unimplemented)
+			return Unimplemented(args[0])
 		}
 		fmt.Println(subcmd.Legal())
 		return nil

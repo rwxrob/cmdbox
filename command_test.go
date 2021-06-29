@@ -29,6 +29,12 @@ func ExampleNewCommand_simple() {
 	x.Print()
 	// Output:
 	// name: foo
+	// commands:
+	//     h: help
+	//     help: help
+	//     version: version
+	// default: help
+
 }
 
 func ExampleNewCommand_subcommand() {
@@ -37,6 +43,12 @@ func ExampleNewCommand_subcommand() {
 	x.Print()
 	// Output:
 	// name: foo bar
+	// commands:
+	//     h: help
+	//     help: help
+	//     version: version
+	// default: help
+
 }
 
 func ExampleNewCommand_invalid() {
@@ -51,6 +63,12 @@ func ExampleNewCommand_dup() {
 	x.Print()
 	// Output:
 	// name: foo_
+	// commands:
+	//     h: help
+	//     help: help
+	//     version: version
+	// default: help
+
 }
 
 func ExampleNewCommand_commands() {
@@ -76,9 +94,9 @@ func ExampleCommand_JSON() {
 	fmt.Println(x.String())
 	fmt.Println(x)
 	// Output:
-	// {"name":"foo"}
-	// {"name":"foo"}
-	// {"name":"foo"}
+	// {"name":"foo","commands":{"h":"help","help":"help","version":"version"},"default":"help"}
+	// {"name":"foo","commands":{"h":"help","help":"help","version":"version"},"default":"help"}
+	// {"name":"foo","commands":{"h":"help","help":"help","version":"version"},"default":"help"}
 }
 
 func ExampleCommand_YAML() {
@@ -88,7 +106,18 @@ func ExampleCommand_YAML() {
 	x.Print()
 	// Output:
 	// name: foo
+	// commands:
+	//     h: help
+	//     help: help
+	//     version: version
+	// default: help
 	// name: foo
+	// commands:
+	//     h: help
+	//     help: help
+	//     version: version
+	// default: help
+
 }
 
 func ExampleCommand_Title() {
@@ -102,21 +131,24 @@ func ExampleCommand_Title() {
 	// foo - just a foo
 }
 
-func ExampleCommand_VersionLine() {
+func ExampleCommand_Legal() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.NewCommand("foo")
-	fmt.Println(x.VersionLine())
+	fmt.Println(x.Legal())
 	x.Version = "v0.0.1"
-	fmt.Println(x.VersionLine())
+	fmt.Println(x.Legal())
 	x.Copyright = "Copyright 2021 Rob"
-	fmt.Println(x.VersionLine())
+	fmt.Println(x.Legal())
 	x.License = "Apache-2"
-	fmt.Println(x.VersionLine())
+	fmt.Println(x.Legal())
 	// Output:
 	//
+	// foo
+	// Copyright 2021 Rob
 	// foo v0.0.1
-	// foo v0.0.1 Copyright 2021 Rob
-	// foo v0.0.1 Copyright 2021 Rob (Apache-2)
+	// Copyright 2021 Rob
+	// License Apache-2
+
 }
 
 func ExampleCommand_Add() {
@@ -133,64 +165,46 @@ func ExampleCommand_Add() {
 	//     list: list
 	//     ls: list
 	//     version: version
+	// default: help
 }
 
-func ExampleCommand_Update() {
-	x := cmdbox.NewCommand("foo")
-	x.Summary = "does foo stuff"
-
-	m := map[string]interface{}{
-		"summary":     "really does foo stuff",
-		"description": "foo description",
-	}
-
-	x.Update(m)
-	x.Print()
-
-	// Output:
-	// name: foo
-	// summary: really does foo stuff
-	// description: foo description
-
-}
-
-func ExampleComplete_commands() {
+func ExampleCommand_Complete_commands() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.NewCommand("foo")
-	x.Add("l|ls|list", "h|help", "version")
+	x.Add("l|ls|list")
 	comp.This = "l"
 	x.Complete()
-	comp.This = "he"
-	x.Complete()
-	comp.This = "z"
-	x.Complete()
+
 	// Output:
 	// l
 	// list
 	// ls
+}
+
+func ExampleCommand_Complete_help() {
+	cmdbox.Init() // just for testing
+	x := cmdbox.NewCommand("foo")
+	x.Add("l|ls|list")
+	comp.This = "h"
+	x.Complete()
+
+	// Output:
+	// h
 	// help
 }
 
-func ExampleComplete_params() {
+func ExampleCommand_Complete_version() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.NewCommand("foo")
-	x.Params = []string{"-1", "25m", "0.2", "FULL"}
-	comp.This = "-"
+	x.Add("l|ls|list")
+	comp.This = "ve"
 	x.Complete()
-	comp.This = "2"
-	x.Complete()
-	comp.This = "0"
-	x.Complete()
-	comp.This = "F"
-	x.Complete()
+
 	// Output:
-	// -1
-	// 25m
-	// 0.2
-	// FULL
+	// version
 }
 
-func ExampleComplete_CompFunc() {
+func ExampleCommand_Complete_compFunc() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.NewCommand("foo")
 	x.CompFunc = func(x *cmdbox.Command) []string {
@@ -218,11 +232,12 @@ func ExampleCommand_Unimplemented() {
 
 func ExampleCommand_UsageError() {
 	cmdbox.Init() // just for testing
-	x := cmdbox.NewCommand("foo", "h|help")
+
+	x := cmdbox.NewCommand("foo")
+	x.Usage = "unique usage here"
 	fmt.Println(x.UsageError())
-	x.Usage = "[h|help]"
-	fmt.Println(x.UsageError())
+
 	// Output:
-	//
-	// [h|help]
+	// usage: foo unique usage here
+
 }
