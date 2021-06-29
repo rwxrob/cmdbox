@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/rwxrob/cmdbox/term"
 	"github.com/rwxrob/cmdbox/term/esc"
 )
 
@@ -21,6 +22,18 @@ var bolditalic = esc.BoldItalic
 var underline = esc.Underline
 
 func init() {
+	if !term.IsTerminal() {
+		reset = ""
+		italic = ""
+		bold = ""
+		bolditalic = ""
+		underline = ""
+		return
+	}
+	emphFromLess()
+}
+
+func emphFromLess() {
 	var x string
 	x = os.Getenv("LESS_TERMCAP_us")
 	if x != "" {
@@ -183,7 +196,7 @@ func Emph(input string, indent, width int) (output string) {
 }
 
 // Emphasize replaces minimal Markdown-like syntax with *Italic*,
-// **Bold**, ***BoldItalic***, and <UNDERLINED_UPPER>
+// **Bold**, ***BoldItalic***, and <bracketed>
 func Emphasize(buf string) string {
 
 	// italic = `<italic>`
