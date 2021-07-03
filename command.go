@@ -190,6 +190,7 @@ type Method func(args []string) error
 // added to the Register. Minimal validation is done on the name and all
 // arguments (subcommands, actions) to ensure a consistent user
 // experience for all CmdBox commands (see valid subpackage for more).
+// The Usage string is set to the default with UpdateUsage.
 // Since calling NewCommand involves critical syntax checks a panic is
 // thrown if invalid.
 func NewCommand(name string, a ...string) *Command {
@@ -203,14 +204,14 @@ func NewCommand(name string, a ...string) *Command {
 	// initialize command with internal h|help and version
 	x.Name = name
 	x.Commands = util.NewStringMap()
-	x.Add("version")
-	x.Add("h|help")
 	x.Default = "help"
 
 	// add any subcommands
 	if len(a) > 0 {
 		x.Add(a...)
 	}
+
+	x.UpdateUsage()
 
 	return x
 }
@@ -244,6 +245,15 @@ func (x *Command) Legal() string {
 		return x.Name + "\n" + x.Copyright
 	default:
 		return ""
+	}
+}
+
+// UpdateUsage will set x.Usage to the default, which is all of the
+// Commands joined with bar (|) and wrapped in brackets ([]).
+func (x *Command) UpdateUsage() {
+	names := x.Commands.Keys()
+	if len(names) > 0 {
+		x.Usage = "[" + strings.Join(names, "|") + "]"
 	}
 }
 

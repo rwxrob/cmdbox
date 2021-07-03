@@ -118,6 +118,18 @@ func Init() {
 //
 //    x := cmdbox.New("foo", "b|bar")
 //
+// Default Usage Automatically Inferred
+//
+// Since it is so common to declare everything up front for a new
+// Command the x.Default will be set to an optional joined list of all
+// commands and aliases as if the following where explicitly assigned:
+//
+//    x.Usage = `[b|bar]`
+//
+// Of course, this can always be overriden explicitly by Command
+// authors using the same assignment. Optional ([]) is the default since
+// any base command since help is automatically the default.
+//
 // Command Method Has Priority
 //
 // When the Command (x) is called from cmdbox.Call the x.Commands Map is
@@ -453,10 +465,11 @@ var executedAs = filepath.Base(os.Args[0])
 //
 // Execute first determines the name of the command to be executed
 // (explicitly passed or inferred from multicall binary, see ExecutedAs)
-// and assigns the command to cmdbox.Main. It traps all panics and Calls
-// the Command. If completion context is detected (see comp.Yes),
-// Execute calls x.Complete instead of Calling it. Execute is gauranteed
-// to always exit the program cleanly. See Call, TrapPanic, and Command.
+// and assigns the command to cmdbox.Main; adds the builtin commands;
+// traps all panics; and finally Calls the Command. If completion
+// context is detected (see comp.Yes), Execute calls x.Complete instead
+// of Calling it. Execute is gauranteed to always exit the program
+// cleanly. See Call, TrapPanic, and Command.
 func Execute(a ...string) {
 	defer TrapPanic()
 	var name string
@@ -470,6 +483,9 @@ func Execute(a ...string) {
 		ExitUnimplemented(name)
 	}
 	Main = x
+	x.Add("h|help")
+	x.Add("version")
+	x.UpdateUsage()
 	if comp.Yes() {
 		x.Complete()
 		Exit()
