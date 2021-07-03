@@ -344,6 +344,10 @@ func (x Command) Help() string {
 	buf += util.Emph("**NAME**", 0, -1) + "\n       " + x.Title() + "\n\n"
 	buf += util.Emph("**SYNOPSIS**", 0, -1) + "\n       " + x.Name + " " + x.Usage + "\n\n"
 
+	if len(x.Commands.M) > 0 {
+		buf += util.Emph("**COMMANDS**", 0, -1) + "\n" + x.Titles(7, 20) + "\n\n"
+	}
+
 	if len(x.Description) > 0 {
 		buf +=
 			util.Emph("**DESCRIPTION**", 0, -1) + "\n" +
@@ -388,8 +392,9 @@ func (x Command) PrintHelp() { fmt.Print(x.Help()) }
 //   2. cmdbox.Main.Name + " " + arg[0] as name
 //   3. arg[0] as name
 //
-// This is useful for Commands that are designed to operate on other
-// Commands in the registry. See Help and Legal for examples.
+// This is a specialized lookup for Commands that are designed to
+// operate on other Commands in the registry. See Help and Legal for
+// examples. See Resolve for simpler resolution of Commands.
 //
 func (x *Command) ResolveDelegate(args []string) *Command {
 	var xx *Command
@@ -408,4 +413,42 @@ func (x *Command) ResolveDelegate(args []string) *Command {
 
 	return Get(args[0])
 
+}
+
+// Sigs returns a StringMap keyed to the Command.Names with
+// signatures as values suitable for printing usage information.
+func (x Command) Sigs() *util.StringMap {
+	return x.Commands.KeysCombined("|")
+}
+
+// Titles returns a single string with the titles of each subcommand
+// indented and with a maximum title signature length for justification.
+func (x Command) Titles(indent, max int) string {
+	buf := ""
+	sigs := x.Sigs()
+	_, lval := sigs.LongestValue()
+	limit := len(lval)
+	if max != 0 && max < limit {
+		limit = max
+	}
+	for _, name := range x.Commands.Values() {
+		buf += fmt.Sprintf("%-"+fmt.Sprintf("%v", limit)+"v - %v\n",
+			sigs.Get(name), x.Resolve(name).Summary)
+	}
+	return util.Indent(buf, indent)
+}
+
+// Resolve looks up the Command from the register based on the name
+// passed. First it looks for a fully qualified entry in the register
+// (x.Name + " " + name), then it just looks for the name alone. Returns
+// nil if nothing found in the register. This method is particularly
+// important because at init time when Commands are Added to the register
+// their subcommands may not yet have been registered. Resolve allows
+// this lookup to happen reliably later in runtime.
+func (x Command) Resolve(name string) *Command {
+	n := Reg.Get(x.Name + " " + name)
+	if n == nil {
+		n = Reg.Get(name)
+	}
+	return n
 }

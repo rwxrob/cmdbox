@@ -41,6 +41,17 @@ const (
 // This can be useful from certain subcommands to query or call directly.
 var Main *Command
 
+// Color sets the default output mode for interactive terminals. Set to
+// false to force uncolored output for testing, etc. Non-interactive
+// terminals have color disabled by default (unless ForceColor is set).
+var Color = true
+
+// ForceColor forces color output no matter what the default Color value
+// is. This can be used for testing or associating with configuration
+// parameters (for example, when a user has a pager that supports color
+// output).
+var ForceColor = false
+
 // Reg contains the Commands register. See CommandMap and Add.
 var Reg = NewCommandMap()
 

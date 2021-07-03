@@ -241,3 +241,124 @@ func ExampleCommand_UsageError() {
 	// usage: foo unique usage here
 
 }
+
+func ExampleCommand_Sigs() {
+	cmdbox.Init() // just for testing
+	x := cmdbox.Add("foo", "h|help", "version", "bar")
+	x.Sigs().Print()
+
+	// Output:
+	// bar: bar
+	// help: h|help
+	// version: version
+}
+
+func ExampleCommand_Titles() {
+	cmdbox.Init() // just for testing
+	x := cmdbox.Add("foo", "bar", "other", "p|print", "c|comp|complete")
+
+	b := cmdbox.Add("bar")
+	b.Summary = `does bar stuff`
+
+	h := cmdbox.Add("other")
+	h.Summary = `other stuff`
+
+	p := cmdbox.Add("print")
+	p.Summary = `prints stuff`
+
+	c := cmdbox.Add("complete")
+	c.Summary = `complete stuff`
+
+	fmt.Println(x.Titles(0, 0))
+	fmt.Println(x.Titles(2, 0))
+	fmt.Println(x.Titles(4, 7))
+
+	// Output:
+	// bar             - does bar stuff
+	// c|comp|complete - complete stuff
+	// other           - other stuff
+	// p|print         - prints stuff
+	//   bar             - does bar stuff
+	//   c|comp|complete - complete stuff
+	//   other           - other stuff
+	//   p|print         - prints stuff
+	//     bar     - does bar stuff
+	//     c|comp|complete - complete stuff
+	//     other   - other stuff
+	//     p|print - prints stuff
+
+}
+
+func ExampleCommand_Resolve() {
+	cmdbox.Init() // just for testing
+
+	x := cmdbox.Add("foo", "bar")
+
+	b := cmdbox.Add("bar")
+	fmt.Println(b.Name)
+
+	r := x.Resolve("bar")
+	if r != nil {
+		fmt.Println(r.Name)
+	}
+
+	// Output:
+	// bar
+	// bar
+}
+
+func ExampleCommand_Resolve_bork() {
+	cmdbox.Init() // just for testing
+
+	x := cmdbox.Add("foo me", "bork")
+
+	r := x.Resolve("bork")
+	fmt.Println(r)
+
+	// Output:
+	// <nil>
+}
+
+func ExampleCommand_Resolve_subcommand() {
+	cmdbox.Init() // just for testing
+
+	x := cmdbox.Add("foo me", "bar")
+
+	b := cmdbox.Add("bar")
+	fmt.Println(b.Name)
+
+	r := x.Resolve("bar")
+	if r != nil {
+		fmt.Println(r.Name)
+	}
+
+	// Output:
+	// bar
+	// bar
+}
+
+/*
+// TODO
+func ExampleCommand_PrintHelp() {
+	cmdbox.Init() // just for testing
+	x := cmdbox.Add("foo", "bar", "other", "p|print", "c|comp|complete")
+
+	b := cmdbox.Add("bar")
+	b.Summary = `does bar stuff`
+
+	h := cmdbox.Add("other")
+	h.Summary = `other stuff`
+
+	p := cmdbox.Add("print")
+	p.Summary = `prints stuff`
+
+	c := cmdbox.Add("complete")
+	c.Summary = `complete stuff`
+
+	x.PrintHelp()
+
+	// Output:
+	// NAME
+
+}
+*/
