@@ -298,6 +298,20 @@ func (m StringMap) LongestKey() (string, string) {
 	return longest, longestv
 }
 
+// LongestValue returns the key and value with the longest value. The first
+// longest value will win and Go maps to not promise any specific order.
+func (m StringMap) LongestValue() (string, string) {
+	longest := ""
+	longestv := ""
+	for k, v := range m.M {
+		if len(v) > len(longestv) {
+			longest = k
+			longestv = v
+		}
+	}
+	return longest, longestv
+}
+
 // ---------------------------- marshaling ----------------------------
 
 // JSON is shortcut for json.Marshal(m). See ToJSON.

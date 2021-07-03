@@ -346,3 +346,12 @@ func ExampleStringMap_LongestKey() {
 	// Output:
 	// ohboy yeah
 }
+
+func ExampleStringMap_LongestValue() {
+	m := util.NewStringMap()
+	m.Set("foo", "fooval")
+	m.Set("ohboy", "yeah")
+	fmt.Println(m.LongestValue())
+	// Output:
+	// foo fooval
+}
