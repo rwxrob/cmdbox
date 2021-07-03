@@ -212,30 +212,30 @@ func (m StringMap) KeysFor(val string) []string {
 	return keys
 }
 
-// AliasesCombined returns a new StringMap pointer with the keys that point
-// to the same value sorted, combined, and delimited into a single key
-// per unique value. This is useful for creating alternative option
-// strings. Also see AliasesFor and KeysCombined.
+// AliasesCombined returns a new StringMap pointer with the keys that
+// point to the same value sorted, combined, and delimited into a single
+// value per unique value as the key. This is useful for creating
+// alternative option strings. Also see AliasesFor and KeysCombined.
 func (m StringMap) AliasesCombined(delim string) *StringMap {
 	n := NewStringMap()
 	n.Lock()
 	for _, name := range m.Values() {
-		n.M[strings.Join(m.AliasesFor(name), delim)] = name
+		n.M[name] = strings.Join(m.AliasesFor(name), delim)
 	}
 	n.Unlock()
 	return n
 }
 
 // KeysCombined returns a new StringMap pointer with the keys that point
-// to the same value sorted, combined, and delimited into a single key
-// per unique value. If any key equals the value it will automatically
-// appear last in the delimited list. This is useful for creating alternative option
-// strings. Also see KeysFor.
+// to the same value sorted, combined, and delimited into a single value
+// per unique value set to the key. If any key equals the value it will
+// automatically appear last in the delimited list. This is useful for
+// creating alternative option strings. Also see KeysFor.
 func (m StringMap) KeysCombined(delim string) *StringMap {
 	n := NewStringMap()
 	n.Lock()
 	for _, name := range m.Values() {
-		n.M[strings.Join(m.KeysFor(name), delim)] = name
+		n.M[name] = strings.Join(m.KeysFor(name), delim)
 	}
 	n.Unlock()
 	return n

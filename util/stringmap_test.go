@@ -202,6 +202,21 @@ func ExampleStringMap_KeysFor() {
 	// [f you foo]
 }
 
+func ExampleStringMap_AliasesCombined() {
+	m := util.NewStringMap()
+	m.Set("foo", "foo")
+	m.Set("f", "foo")
+	m.Set("bar", "bar")
+	m.Set("b", "bar")
+	m.Set("you", "foo")
+	m.AliasesCombined("|").Print()
+
+	// Output:
+	// bar: b
+	// foo: f|you
+
+}
+
 func ExampleStringMap_KeysCombined() {
 	m := util.NewStringMap()
 	m.Set("foo", "foo")
@@ -212,8 +227,8 @@ func ExampleStringMap_KeysCombined() {
 	m.KeysCombined("|").Print()
 
 	// Output:
-	// b|bar: bar
-	// f|you|foo: foo
+	// bar: b|bar
+	// foo: f|you|foo
 
 }
 
