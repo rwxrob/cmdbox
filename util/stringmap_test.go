@@ -178,15 +178,43 @@ func ExampleStringMap_Aliases() {
 
 func ExampleStringMap_AliasesFor() {
 	m := util.NewStringMap()
-	m.Set("foo", "1")
-	m.Set("f", "1")
+	m.Set("foo", "foo")
+	m.Set("f", "foo")
 	m.Set("bar", "bar")
 	m.Set("b", "bar")
-	m.Set("you", "1")
-	fmt.Println(m.AliasesFor("1"))
+	m.Set("you", "foo")
+	fmt.Println(m.AliasesFor("foo"))
 
 	// Output:
-	// [f foo you]
+	// [f you]
+}
+
+func ExampleStringMap_KeysFor() {
+	m := util.NewStringMap()
+	m.Set("foo", "foo")
+	m.Set("f", "foo")
+	m.Set("bar", "bar")
+	m.Set("b", "bar")
+	m.Set("you", "foo")
+	fmt.Println(m.KeysFor("foo"))
+
+	// Output:
+	// [f you foo]
+}
+
+func ExampleStringMap_KeysCombined() {
+	m := util.NewStringMap()
+	m.Set("foo", "foo")
+	m.Set("f", "foo")
+	m.Set("bar", "bar")
+	m.Set("b", "bar")
+	m.Set("you", "foo")
+	m.KeysCombined("|").Print()
+
+	// Output:
+	// b|bar: bar
+	// f|you|foo: foo
+
 }
 
 func ExampleStringMap_Slice() {
