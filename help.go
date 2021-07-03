@@ -4,7 +4,7 @@ func init() { addHelp() }
 
 func addHelp() {
 	x := Add("help")
-	x.Usage = `[<name>]`
+	x.Usage = `[<command>]`
 	x.Summary = `display command help information`
 	x.Version = `v1.0.0`
 	x.Copyright = `Copyright 2021 Robert S Muhlestein`
@@ -13,14 +13,8 @@ func addHelp() {
 	x.Issues = `https://github.com/rwxrob/cmdbox-help/issues`
 
 	x.Description = `
-		Use this command to display full help information about the CmdBox
-		program or any of its subcommands. If an optional command <name> is
-		provided the help information for that specific command will be
-		provided instead. If no argument is passed will display help
-		information for the immediately preceeding command. By default this
-		command is added to all CmdBox commands as h|help. The help command
-		always returns an error so as to not be confused with more
-		legitimate command output.`
+		Prints help information about the program or a specific command to
+		standard output returning a harmless error.`
 
 	x.Method = func(args []string) error {
 		var helpFor *Command
