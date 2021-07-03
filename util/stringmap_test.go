@@ -176,6 +176,19 @@ func ExampleStringMap_Aliases() {
 	// [b f foo you]
 }
 
+func ExampleStringMap_AliasesFor() {
+	m := util.NewStringMap()
+	m.Set("foo", "1")
+	m.Set("f", "1")
+	m.Set("bar", "bar")
+	m.Set("b", "bar")
+	m.Set("you", "1")
+	fmt.Println(m.AliasesFor("1"))
+
+	// Output:
+	// [f foo you]
+}
+
 func ExampleStringMap_Slice() {
 	m := util.NewStringMap()
 	m.Set("foo", "fooval")

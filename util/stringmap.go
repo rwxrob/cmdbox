@@ -173,6 +173,20 @@ func (m StringMap) Aliases() []string {
 	return a
 }
 
+// AliasesFor returns only the keys that point to a specific value.
+func (m StringMap) AliasesFor(val string) []string {
+	defer m.Unlock()
+	m.Lock()
+	aliases := []string{}
+	for k, v := range m.M {
+		if v == val {
+			aliases = append(aliases, k)
+		}
+	}
+	sort.Strings(aliases)
+	return aliases
+}
+
 // Slice returns a slice of values fetched from the StringMap in order
 // that match the key names passed. If a name is not found its value
 // will be an empty string. Slice is safe for concurrency.
@@ -184,6 +198,20 @@ func (m StringMap) Slice(keys ...string) []string {
 		vals[i] = m.M[k]
 	}
 	return vals
+}
+
+// KeysCombined returns a new StringMap pointer with the keys that point
+// to the same value sorted, combined, and delimited into a single key
+// per unique value. This is useful for creating alternative option
+// strings.
+func (m StringMap) KeysCombined(delim string) *StringMap {
+	defer m.Unlock()
+	m.Lock()
+	n := NewStringMap()
+	//for _, name := range m.Values() {
+	// TODO
+	//}
+	return n
 }
 
 // HasSuffix returns a new StringMap containing only those entries that
