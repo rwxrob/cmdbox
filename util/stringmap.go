@@ -284,6 +284,20 @@ func (m StringMap) HasPrefix(s string) *StringMap {
 	return n
 }
 
+// LongestKey returns the key and value with the longest key. The first
+// longest key will win and Go maps to not promise any specific order.
+func (m StringMap) LongestKey() (string, string) {
+	longest := ""
+	longestv := ""
+	for k, v := range m.M {
+		if len(k) > len(longest) {
+			longest = k
+			longestv = v
+		}
+	}
+	return longest, longestv
+}
+
 // ---------------------------- marshaling ----------------------------
 
 // JSON is shortcut for json.Marshal(m). See ToJSON.

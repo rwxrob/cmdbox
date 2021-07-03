@@ -337,3 +337,12 @@ func ExampleStringMap_MarshalYAML() {
 	// Output:
 	// foo: val
 }
+
+func ExampleStringMap_LongestKey() {
+	m := util.NewStringMap()
+	m.Set("foo", "fooval")
+	m.Set("ohboy", "yeah")
+	fmt.Println(m.LongestKey())
+	// Output:
+	// ohboy yeah
+}
