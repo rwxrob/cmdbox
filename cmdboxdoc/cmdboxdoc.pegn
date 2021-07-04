@@ -1,0 +1,49 @@
+# CmdBoxDoc (v0.0.1) github.com/rwxrob/cmdbox
+
+# double pass parsing required, first to parse blocks
+
+# ----------------------------- Document -----------------------------
+
+Document    <-- IndentDoc / RegularDoc
+
+IndentDoc   <-- BlankLine* IndentBlock+
+IndentBlock <-- IndentLines+
+IndentLine  <-- Indent Line
+Indent      <-- SP+
+
+RegularDoc  <-- BlankLine* RawBlock+
+RawBlock    <-- Lines+ (EndLine / ENDOFDATA)
+
+Line        <-- (!EndLine unipoint)+ EndLine
+EndLine     <-- LF / CRLF / CR
+
+# ------------------------------ Blocks ------------------------------
+
+# end of block detection is no longer needed since blocks parsed in
+# first pass, therefore things like EndLine are irrelevant (except in
+# Verbatim where still a part of the content)
+
+Block       <-- Verbatim / Heading / Paragraph
+
+Verbatim     <- RawLine+
+RawLine     <-- SP{4,} Line
+
+Heading      <- &uupper (!EndLine Span)+ &Paragraph # not exactly Godoc
+
+Paragraph    <- Span+
+
+Span        <-- Emph / Strong / StrongEmph / Identifier / Plain
+SpanTokens  <-- Spaces / Word / LineBreak
+Spaces       <- SP+
+Word         <- (!SP uprint)+
+LineBreak    <- SP{2,}
+
+Emph         <- &SpanSP '*' !SP (!'*' SpanTokens)+ !SP '*' &SpanSP
+Strong       <- &SpanSP '**' !SP (!'**' SpanTokens)+ !SP '**' &SpanSP
+StrongEmph   <- &SpanSP '***' !SP (!'***' SpanTokens)+ !SP '***' &SpanSP
+Identifier   <- &SpanSP '<' !SP (!'>' SpanTokens)+ !SP '>' &SpanSP
+Plain        <- SpanTokens+
+
+SpanSP      <-- SP / StartBlock
+
+# TODO add smart double and single quotes
