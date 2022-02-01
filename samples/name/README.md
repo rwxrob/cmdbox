@@ -1,4 +1,4 @@
-# Some Commands in Own Package/Modules
+# Some Commands in Own Packages[j/Modules
 
 This sample breaks out the Russian and Chinese language command into
 their own packages for completely independent development that could be
