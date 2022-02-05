@@ -438,7 +438,7 @@ func Resolve(caller *Command, name string, args []string) (Method,
 // Call returns Unimplemented. Otherwise, Method is called with its
 // arguments and error result returned.  See Resolve, Command, Execute,
 // and ExampleCall as well.
-func Call(caller *Command, name string, args []string) error {
+func Call(caller *Command, name string, args ...string) error {
 	defer TrapPanic()
 	if name == "" {
 		return MissingArg("name")
@@ -501,7 +501,7 @@ func Execute(a ...string) {
 		x.Complete()
 		Exit()
 	}
-	err := Call(x, name, os.Args[1:])
+	err := Call(x, name, os.Args[1:]...)
 	if err != nil {
 		ExitError(err)
 	}

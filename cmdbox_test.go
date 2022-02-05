@@ -232,7 +232,7 @@ func ExampleCall_nil_Caller() {
 		return nil
 	}
 
-	cmdbox.Call(nil, "greet", nil)
+	cmdbox.Call(nil, "greet")
 
 	// Output:
 	// hello
@@ -251,9 +251,9 @@ func ExampleCall_caller_Subcommand() {
 		return nil
 	}
 
-	cmdbox.Call(caller, "help", nil)
-	cmdbox.Call(nil, "foo help", nil)
-	cmdbox.Call(caller, "help", []string{"with", "args"})
+	cmdbox.Call(caller, "help")
+	cmdbox.Call(nil, "foo help")
+	cmdbox.Call(caller, "help", "with", "args")
 
 	// Output:
 	// help for foo []
