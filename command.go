@@ -333,6 +333,12 @@ func (x *Command) Unimplemented(a string) error { return Unimplemented(a) }
 // cmdbox.UsageError.
 func (x *Command) UsageError() error { return UsageError(x) }
 
+// MissingArg returns cmdbox.MissingArg
+func (x *Command) MissingArg(a string) error { return MissingArg(a) }
+
+// UnexpectedArg returns cmdbox.UnexpectedArg
+func (x *Command) UnexpectedArg(a string) error { return UnexpectedArg(a) }
+
 // ------------------------------- help -------------------------------
 
 // Help returns a formatted string suitable for printing either to

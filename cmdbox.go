@@ -34,6 +34,7 @@ const (
 	m_unimplemented  = "unimplemented: %v"
 	m_bad_type       = "unsupported type: %T"
 	m_missing_arg    = "missing argument for %v"
+	m_unexpected_arg = "unexpected argument: %v"
 	m_missing_caller = "requires caller"
 )
 
@@ -317,6 +318,12 @@ var Harmless = func(msg ...string) error {
 // MissingArg returns an error stating that the name of the parameter
 // for which no argument was found.
 var MissingArg = func(name string) error {
+	return fmt.Errorf(m_missing_arg, name)
+}
+
+// UnexpectedArg returns an error stating that the argument passed was
+// unexpected in the given context.
+var UnexpectedArg = func(name string) error {
 	return fmt.Errorf(m_missing_arg, name)
 }
 
