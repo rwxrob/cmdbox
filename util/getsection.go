@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+// GetSection will return the content of all lines between the beginning
+// and ending lines indicated. The match must be exact and all potential
+// carriage returns in the section will be discarded.
+//
 func GetSection(src io.Reader, beg, end string) string {
 	buf := ""
 	insection := false
