@@ -334,10 +334,14 @@ func (x *Command) Unimplemented(a string) error { return Unimplemented(a) }
 func (x *Command) UsageError() error { return UsageError(x) }
 
 // MissingArg returns cmdbox.MissingArg
-func (x *Command) MissingArg(a string) error { return MissingArg(a) }
+func (x *Command) MissingArg(a string) error {
+	return MissingArg(a)
+}
 
 // UnexpectedArg returns cmdbox.UnexpectedArg
-func (x *Command) UnexpectedArg(a string) error { return UnexpectedArg(a) }
+func (x *Command) UnexpectedArg(a string) error {
+	return UnexpectedArg(a)
+}
 
 // ------------------------------- help -------------------------------
 
@@ -423,12 +427,14 @@ func (x *Command) ResolveDelegate(args []string) *Command {
 
 // Sigs returns a StringMap keyed to the Command.Names with
 // signatures as values suitable for printing usage information.
+//
 func (x Command) Sigs() *util.StringMap {
 	return x.Commands.KeysCombined("|")
 }
 
 // Titles returns a single string with the titles of each subcommand
 // indented and with a maximum title signature length for justification.
+//
 func (x Command) Titles(indent, max int) string {
 	buf := ""
 	sigs := x.Sigs()
@@ -438,8 +444,13 @@ func (x Command) Titles(indent, max int) string {
 		limit = max
 	}
 	for _, name := range x.Commands.Values() {
+		summary := "<not yet implemented>"
+		c := x.Resolve(name)
+		if c != nil {
+			summary = c.Summary
+		}
 		buf += fmt.Sprintf("%-"+fmt.Sprintf("%v", limit)+"v - %v\n",
-			sigs.Get(name), x.Resolve(name).Summary)
+			sigs.Get(name), summary)
 	}
 	return util.Indent(buf, indent)
 }
