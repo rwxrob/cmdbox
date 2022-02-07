@@ -324,7 +324,7 @@ var MissingArg = func(name string) error {
 // UnexpectedArg returns an error stating that the argument passed was
 // unexpected in the given context.
 var UnexpectedArg = func(name string) error {
-	return fmt.Errorf(m_missing_arg, name)
+	return fmt.Errorf(m_unexpected_arg, name)
 }
 
 // SyntaxErrorPanic panics with the message stating the problem.
@@ -454,7 +454,7 @@ func Call(caller *Command, name string, args ...string) error {
 	if method == nil {
 		return Unimplemented(name)
 	}
-	return method(args)
+	return method(args...)
 }
 
 // ExecutedAs returns the multicall inferred name of the executable as

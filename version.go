@@ -19,7 +19,7 @@ func addVersion() {
 		CmdBox command may have been composed from one or more other
 		independent command modules before being statically linked).`
 
-	x.Method = func(args []string) error {
+	x.Method = func(args ...string) error {
 		if len(args) == 0 {
 			fmt.Println(x.Legal())
 			return nil

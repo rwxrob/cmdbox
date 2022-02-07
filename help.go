@@ -16,7 +16,7 @@ func addHelp() {
 		Prints help information about the program or a specific command to
 		standard output returning a harmless error.`
 
-	x.Method = func(args []string) error {
+	x.Method = func(args ...string) error {
 		var helpFor *Command
 
 		if len(args) > 0 {
@@ -34,6 +34,7 @@ func addHelp() {
 
 			// "help cmd" -> "cmd"
 			helpFor = Get(potential)
+
 			if helpFor != nil {
 				helpFor.PrintHelp()
 				return Harmless()

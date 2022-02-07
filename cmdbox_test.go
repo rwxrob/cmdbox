@@ -180,13 +180,13 @@ func ExampleResolve() {
 	gr.Summary = "main greet composite, no method"
 
 	fr := cmdbox.Add("greet french")
-	fr.Method = func(args []string) error {
+	fr.Method = func(args ...string) error {
 		fmt.Print("Salut")
 		return nil
 	}
 
 	ru := cmdbox.Add("greet russian")
-	ru.Method = func(args []string) error {
+	ru.Method = func(args ...string) error {
 		fmt.Print("Privyet")
 		return nil
 	}
@@ -206,7 +206,7 @@ func ExampleResolve() {
 	for _, t := range tests {
 		method, args := cmdbox.Resolve(t.caller, t.name, t.args)
 		if method != nil {
-			method(args)
+			method(args...)
 			fmt.Printf("%v %q\n", t.name, args)
 			continue
 		}
@@ -227,7 +227,7 @@ func ExampleCall_nil_Caller() {
 
 	x := cmdbox.Add("greet")
 
-	x.Method = func(args []string) error {
+	x.Method = func(args ...string) error {
 		fmt.Println("hello")
 		return nil
 	}
@@ -246,7 +246,7 @@ func ExampleCall_caller_Subcommand() {
 
 	x := cmdbox.Add("foo help")
 
-	x.Method = func(args []string) error {
+	x.Method = func(args ...string) error {
 		fmt.Printf("help for foo %v\n", args)
 		return nil
 	}
@@ -265,7 +265,7 @@ func ExampleCall_caller_Subcommand() {
 func ExampleExecute_no_Method() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.Get("help")
-	x.Method = func(args []string) error {
+	x.Method = func(args ...string) error {
 		return x.Unimplemented("foo")
 	}
 
@@ -281,7 +281,7 @@ func ExampleExecute_no_Method() {
 func ExampleExecute_unimplemented_Default() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.Get("help")
-	x.Method = func(args []string) error {
+	x.Method = func(args ...string) error {
 		return x.UsageError()
 	}
 
@@ -300,7 +300,7 @@ func ExampleExecute_first_Is_Default() {
 	cmdbox.Add("foo", "h|help")
 
 	h := cmdbox.Add("foo help")
-	h.Method = func(args []string) error {
+	h.Method = func(args ...string) error {
 		fmt.Println("would show foo help")
 		return nil
 	}

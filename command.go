@@ -183,7 +183,7 @@ type Command struct {
 }
 
 // Method defines functions for use primarily as Command.Method values.
-type Method func(args []string) error
+type Method func(args ...string) error
 
 // NewCommand returns pointer to new initialized Command. See the New
 // package function instead for creating a new Command that is also
