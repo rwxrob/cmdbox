@@ -189,7 +189,9 @@ type Command struct {
 	sync.Mutex `json:"-" yaml:"-"`
 }
 
-// Method defines functions for use primarily as Command.Method values.
+// Method represents a function to be used as Command.Method values.
+// By convention, use "args" when arguments are expected and "none" when
+// not.
 type Method func(args ...string) error
 
 // NewCommand returns pointer to new initialized Command. See the New
