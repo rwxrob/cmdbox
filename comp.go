@@ -60,9 +60,8 @@ func CompleteCommand(x *Command) []string {
 			rv = append(rv, k)
 		}
 	}
-	if x.Hidden != nil {
-		rv = util.OmitFromSlice(rv, x.Hidden)
-	}
+	rv = util.OmitFromSlice(rv, x.Hidden)
+	rv = util.OmitFromSlice(rv, x.Commands.Aliases())
 	sort.Strings(rv)
 	return rv
 }

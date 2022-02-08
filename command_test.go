@@ -29,10 +29,7 @@ func ExampleNewCommand_simple() {
 	x.Print()
 	// Output:
 	// name: foo
-	// commands:
-	//     h: help
-	//     help: help
-	//     version: version
+	// commands: {}
 	// default: help
 
 }
@@ -43,17 +40,15 @@ func ExampleNewCommand_subcommand() {
 	x.Print()
 	// Output:
 	// name: foo bar
-	// commands:
-	//     h: help
-	//     help: help
-	//     version: version
+	// commands: {}
 	// default: help
 
 }
 
 func ExampleNewCommand_invalid() {
-	defer cmdbox.TrapPanic()
+	defer cmdbox.TrapPanicNoExit()
 	cmdbox.NewCommand("Foo") // see valid/name.go for more
+
 	// Output:
 	// syntax error: invalid name (must be lowercase word): Foo
 }
@@ -63,40 +58,37 @@ func ExampleNewCommand_dup() {
 	x.Print()
 	// Output:
 	// name: foo_
-	// commands:
-	//     h: help
-	//     help: help
-	//     version: version
+	// commands: {}
 	// default: help
 
 }
 
 func ExampleNewCommand_commands() {
 	cmdbox.Init() // just for testing
-	x := cmdbox.NewCommand("foo", "h|help", "version", "l|ls|list")
+	x := cmdbox.NewCommand("foo", "h|help", "l|ls|list")
 	x.Print()
 	// Output:
 	// name: foo
+	// usage: '[h|help|l|list|ls]'
 	// commands:
-	//     h: help
-	//     help: help
-	//     l: list
-	//     list: list
-	//     ls: list
-	//     version: version
+	//   h: help
+	//   help: help
+	//   l: list
+	//   list: list
+	//   ls: list
 	// default: help
 }
 
 func ExampleCommand_JSON() {
 	cmdbox.Init() // just for testing
-	x := cmdbox.NewCommand("foo")
+	x := cmdbox.NewCommand("foo", "help")
 	fmt.Println(x.JSON())
 	fmt.Println(x.String())
 	fmt.Println(x)
 	// Output:
-	// {"name":"foo","commands":{"h":"help","help":"help","version":"version"},"default":"help"}
-	// {"name":"foo","commands":{"h":"help","help":"help","version":"version"},"default":"help"}
-	// {"name":"foo","commands":{"h":"help","help":"help","version":"version"},"default":"help"}
+	// {"name":"foo","usage":"[help]","commands":{"help":"help"},"default":"help"}
+	// {"name":"foo","usage":"[help]","commands":{"help":"help"},"default":"help"}
+	// {"name":"foo","usage":"[help]","commands":{"help":"help"},"default":"help"}
 }
 
 func ExampleCommand_YAML() {
@@ -106,16 +98,10 @@ func ExampleCommand_YAML() {
 	x.Print()
 	// Output:
 	// name: foo
-	// commands:
-	//     h: help
-	//     help: help
-	//     version: version
+	// commands: {}
 	// default: help
 	// name: foo
-	// commands:
-	//     h: help
-	//     help: help
-	//     version: version
+	// commands: {}
 	// default: help
 
 }
@@ -159,12 +145,12 @@ func ExampleCommand_Add() {
 	// Output:
 	// name: foo
 	// commands:
-	//     h: help
-	//     help: help
-	//     l: list
-	//     list: list
-	//     ls: list
-	//     version: version
+	//   h: help
+	//   help: help
+	//   l: list
+	//   list: list
+	//   ls: list
+	//   version: version
 	// default: help
 }
 
@@ -176,32 +162,7 @@ func ExampleCommand_Complete_commands() {
 	x.Complete()
 
 	// Output:
-	// l
 	// list
-	// ls
-}
-
-func ExampleCommand_Complete_help() {
-	cmdbox.Init() // just for testing
-	x := cmdbox.NewCommand("foo")
-	x.Add("l|ls|list")
-	comp.This = "h"
-	x.Complete()
-
-	// Output:
-	// h
-	// help
-}
-
-func ExampleCommand_Complete_version() {
-	cmdbox.Init() // just for testing
-	x := cmdbox.NewCommand("foo")
-	x.Add("l|ls|list")
-	comp.This = "ve"
-	x.Complete()
-
-	// Output:
-	// version
 }
 
 func ExampleCommand_Complete_compFunc() {

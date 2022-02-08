@@ -18,7 +18,6 @@ package cmdbox_test
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/rwxrob/cmdbox"
 )
@@ -121,11 +120,9 @@ func ExampleGet() {
 
 	// Output:
 	// name: foo
+	// usage: '[bar]'
 	// commands:
-	//     bar: bar
-	//     h: help
-	//     help: help
-	//     version: version
+	//   bar: bar
 	// default: help
 }
 
@@ -174,7 +171,7 @@ func ExampleDelete() {
 
 func ExampleResolve() {
 	cmdbox.Init() // just for testing
-	defer cmdbox.TrapPanic()
+	defer cmdbox.TrapPanicNoExit()
 
 	gr := cmdbox.Add("greet", "fr|french", "ru|russian")
 	gr.Summary = "main greet composite, no method"
@@ -215,7 +212,7 @@ func ExampleResolve() {
 
 	// Output:
 	// greet []
-	// greet []
+	// greet ["h"]
 	// greet ["hi"]
 	// Privyetgreet russian ["hi"]
 	// Privyetrussian ["hi"]
@@ -264,6 +261,9 @@ func ExampleCall_caller_Subcommand() {
 
 func ExampleExecute_no_Method() {
 	cmdbox.Init() // just for testing
+	cmdbox.ExitOff()
+	defer cmdbox.ExitOn()
+
 	x := cmdbox.Get("help")
 	x.Method = func(args ...string) error {
 		return x.Unimplemented("foo")
@@ -274,12 +274,14 @@ func ExampleExecute_no_Method() {
 
 	// Output:
 	// unimplemented: foo
-	// unexpected call to os.Exit(0) during test
 
 }
 
 func ExampleExecute_unimplemented_Default() {
 	cmdbox.Init() // just for testing
+	cmdbox.ExitOff()
+	defer cmdbox.ExitOn()
+
 	x := cmdbox.Get("help")
 	x.Method = func(args ...string) error {
 		return x.UsageError()
@@ -289,13 +291,14 @@ func ExampleExecute_unimplemented_Default() {
 	cmdbox.Execute("foo")
 
 	// Output:
-	// usage: help [<name>]
-	// unexpected call to os.Exit(0) during test
+	// usage: help [<command>]
 
 }
 
 func ExampleExecute_first_Is_Default() {
 	cmdbox.Init() // just for testing
+	cmdbox.ExitOff()
+	defer cmdbox.ExitOn()
 
 	cmdbox.Add("foo", "h|help")
 
@@ -309,52 +312,5 @@ func ExampleExecute_first_Is_Default() {
 
 	// Output:
 	// would show foo help
-	// unexpected call to os.Exit(0) during test
 
 }
-
-func ExampleExecute_completion_Context_Space() {
-
-	os.Setenv("COMP_LINE", "foo ")
-	cmdbox.Execute("foo")
-
-	// Output:
-	// h
-	// help
-	// version
-	// unexpected call to os.Exit(0) during test
-
-}
-
-func ExampleExecute_completion_Context_Help() {
-
-	os.Setenv("COMP_LINE", "foo h")
-	cmdbox.Execute("foo")
-
-	// Output:
-	// h
-	// help
-	// unexpected call to os.Exit(0) during test
-
-}
-
-func ExampleExecute_completion_Context_Version() {
-
-	os.Setenv("COMP_LINE", "foo ver")
-	cmdbox.Execute("foo")
-
-	// Output:
-	// version
-	// unexpected call to os.Exit(0) during test
-
-}
-
-/*
-func ExampleExitError_error() {
-	e := fmt.Errorf("error here")
-	cmdbox.ExitError(e)
-	cmdbox.ExitError("another error")
-	// Output:
-	// error here
-}
-*/

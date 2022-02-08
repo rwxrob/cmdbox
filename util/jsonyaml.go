@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 // ToJSON converts any object to its compact JSON string

@@ -42,6 +42,16 @@ const (
 // This can be useful from certain subcommands to query or call directly.
 var Main *Command
 
+// DoNotExit is a utility for disabling any call to os.Exit via any
+// caller in order to trap panics and use them for testing, etc.
+var DoNotExit bool
+
+// ExitOff sets DoNotExit to false.
+func ExitOff() { DoNotExit = true }
+
+// ExitOn sets DoNotExit to true.
+func ExitOn() { DoNotExit = false }
+
 // Color sets the default output mode for interactive terminals. Set to
 // false to force uncolored output for testing, etc. Non-interactive
 // terminals have color disabled by default (unless ForceColor is set).
@@ -250,7 +260,11 @@ func Delete(names ...string) { Reg.Delete(names...) }
 // ---------------------- exit and error handling ---------------------
 
 // Exit calls os.Exit(0).
-func Exit() { os.Exit(0) }
+func Exit() {
+	if !DoNotExit {
+		os.Exit(0)
+	}
+}
 
 // ExitError prints err and exits with 1 return value.
 func ExitError(err ...interface{}) {
@@ -266,7 +280,9 @@ func ExitError(err ...interface{}) {
 			fmt.Println(out)
 		}
 	}
-	os.Exit(1)
+	if !DoNotExit {
+		os.Exit(1)
+	}
 }
 
 // ExitUnimplemented calls Unimplemented and calls ExitError().
@@ -280,6 +296,14 @@ func ExitUnimplemented(a string) { ExitError(Unimplemented(a)) }
 var TrapPanic = func() {
 	if r := recover(); r != nil {
 		ExitError(r)
+	}
+}
+
+// TrapPanicNoExit is same as TrapPanic without exiting. It prints the
+// panic instead (useful for testing).
+var TrapPanicNoExit = func() {
+	if r := recover(); r != nil {
+		fmt.Println(r)
 	}
 }
 
@@ -501,7 +525,7 @@ func Execute(a ...string) {
 		ExitUnimplemented(name)
 	}
 	Main = x
-	x.Add("help")
+	x.Add("h|help")
 	x.Add("version")
 	x.UpdateUsage()
 	if comp.Yes() {
