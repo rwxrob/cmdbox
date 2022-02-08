@@ -501,7 +501,7 @@ func Execute(a ...string) {
 		ExitUnimplemented(name)
 	}
 	Main = x
-	x.Add("h|help")
+	x.Add("help")
 	x.Add("version")
 	x.UpdateUsage()
 	if comp.Yes() {
