@@ -140,6 +140,11 @@ func (m StringMap) Keys() []string {
 	return keys
 }
 
+// KeysWithout is same as Keys but omits a list of strings.
+func (m StringMap) KeysWithout(omit []string) []string {
+	return OmitFromSlice(m.Keys(), omit)
+}
+
 // Values returns a sorted list of all unique values safe for
 // concurrency.
 func (m StringMap) Values() []string {
@@ -212,6 +217,11 @@ func (m StringMap) KeysFor(val string) []string {
 	return keys
 }
 
+// KeysForWithout is same as KeysFor but omits a list of strings.
+func (m StringMap) KeysForWithout(val string, omit []string) []string {
+	return OmitFromSlice(m.KeysFor(val), omit)
+}
+
 // AliasesCombined returns a new StringMap pointer with the keys that
 // point to the same value sorted, combined, and delimited into a single
 // value per unique value as the key. This is useful for creating
@@ -236,6 +246,18 @@ func (m StringMap) KeysCombined(delim string) *StringMap {
 	n.Lock()
 	for _, name := range m.Values() {
 		n.M[name] = strings.Join(m.KeysFor(name), delim)
+	}
+	n.Unlock()
+	return n
+}
+
+// KeysWithoutCombined is same as KeysCombined but omits a list of
+// strings.
+func (m StringMap) KeysCombinedWithout(delim string, omit []string) *StringMap {
+	n := NewStringMap()
+	n.Lock()
+	for _, name := range m.Values() {
+		n.M[name] = strings.Join(m.KeysForWithout(name, omit), delim)
 	}
 	n.Unlock()
 	return n

@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/rwxrob/cmdbox/comp"
+	"github.com/rwxrob/cmdbox/util"
 )
 
 // CompFunc defines a first-class function type for tab completion
@@ -39,10 +40,10 @@ var DefaultComplete = CompFunc(CompleteCommand)
 // CompleteCommand takes a pointer to a Command (x) returning a list of
 // lexigraphically sorted combination of strings from x.Commands that
 // are found in the internal register and x.Params that match the
-// current completion context. Returns an empty list if anything fails.
-// Note that no assertion validating that the specified command names
-// exist in the register. See the Command.Complete method and comp
-// subpackage.
+// current completion context with any x.Hidden strings removed. Returns
+// an empty list if anything fails.  Note that no assertion validating
+// that the specified command names exist in the register. See the
+// Command.Complete method and comp subpackage.
 func CompleteCommand(x *Command) []string {
 	rv := []string{}
 	if comp.Line() == "" {
@@ -58,6 +59,9 @@ func CompleteCommand(x *Command) []string {
 		if word == " " || strings.HasPrefix(k, word) {
 			rv = append(rv, k)
 		}
+	}
+	if x.Hidden != nil {
+		rv = util.OmitFromSlice(rv, x.Hidden)
 	}
 	sort.Strings(rv)
 	return rv

@@ -152,6 +152,12 @@ import (
 // possible, arguments as well. (For more complex completion, assign
 // a custom x.CompFunc function.)
 //
+// Hidden
+//
+// The Hidden list is to keep commands from being completed or showing
+// up in any general help documentation. They have to be specifically
+// used or passed to help directly.
+//
 // Examples
 //
 // For examples of different Command structs search on GitHub for any
@@ -173,6 +179,7 @@ type Command struct {
 	Issues      string          `json:"issues,omitempty" yaml:",omitempty"`
 	Commands    *util.StringMap `json:"commands,omitempty" yaml:",omitempty"`
 	Params      []string        `json:"params,omitempty" yaml:",omitempty"`
+	Hidden      []string        `json:"hidden,omitempty" yaml:",omitempty"`
 	Default     string          `json:"default,omitempty" yaml:",omitempty"`
 	// Title()
 	// Legal()
@@ -348,6 +355,7 @@ func (x *Command) UnexpectedArg(a string) error {
 // Help returns a formatted string suitable for printing either to
 // a file or to an interactive terminal. For a more structured form of
 // the same information see YAML, JSON, Print, and PrintHelp.
+//
 func (x Command) Help() string {
 	var buf string
 
@@ -426,7 +434,8 @@ func (x *Command) ResolveDelegate(args []string) *Command {
 }
 
 // Sigs returns a StringMap keyed to the Command.Names with
-// signatures as values suitable for printing usage information.
+// signatures as values suitable for printing usage information. Hidden
+// commands are omitted.
 //
 func (x Command) Sigs() *util.StringMap {
 	return x.Commands.KeysCombined("|")
@@ -434,6 +443,7 @@ func (x Command) Sigs() *util.StringMap {
 
 // Titles returns a single string with the titles of each subcommand
 // indented and with a maximum title signature length for justification.
+// Hidden commands are not included.
 //
 func (x Command) Titles(indent, max int) string {
 	buf := ""
@@ -446,6 +456,9 @@ func (x Command) Titles(indent, max int) string {
 	for _, name := range x.Commands.Values() {
 		summary := "<not yet implemented>"
 		c := x.Resolve(name)
+		if util.InSlice(name, x.Hidden) {
+			continue
+		}
 		if c != nil {
 			summary = c.Summary
 		}
