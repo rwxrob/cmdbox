@@ -474,13 +474,18 @@ func (x Command) Titles(indent, max int) string {
 // passed. First it looks for a fully qualified entry in the register
 // (x.Name + " " + name), then it just looks for the name alone. Returns
 // nil if nothing found in the register. This method is particularly
-// important because at init time when Commands are Added to the register
-// their subcommands may not yet have been registered. Resolve allows
-// this lookup to happen reliably later in runtime.
+// important because at init time when Commands are Added to the
+// register their subcommands may not yet have been registered. Resolve
+// allows this lookup to happen reliably later in runtime.
 func (x Command) Resolve(name string) *Command {
 	n := Reg.Get(x.Name + " " + name)
 	if n == nil {
 		n = Reg.Get(name)
 	}
 	return n
+}
+
+// Call is a convenience method that calls cmdbox.Call(x,"foo",args...).
+func (x *Command) Call(name string, args ...string) error {
+	return Call(x, name, args...)
 }
