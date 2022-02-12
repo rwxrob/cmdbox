@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/* Package cmdbox is a multicall, modular commander with embedded tab
-completion and locale-driven documentation, that prioritizes modern,
-speakable human-computer interactions from the command line.
+/* Package cmdbox is a multicall, modular commander with embedded
+documentation and tab completion handling that prioritizes modern,
+simple human-computer interactions from the command line.
 */
 package cmdbox
 
@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/rwxrob/cmdbox/comp"
 )
@@ -39,98 +40,113 @@ const (
 )
 
 // Main is always set to the main command that was used for Execute.
-// This can be useful from certain subcommands to query or call directly.
+// This can be useful from certain subcommands to query or call
+// directly.
+//
 var Main *Command
 
 // DoNotExit is a utility for disabling any call to os.Exit via any
 // caller in order to trap panics and use them for testing, etc.
+//
 var DoNotExit bool
 
 // ExitOff sets DoNotExit to false.
+//
 func ExitOff() { DoNotExit = true }
 
 // ExitOn sets DoNotExit to true.
+//
 func ExitOn() { DoNotExit = false }
 
 // Color sets the default output mode for interactive terminals. Set to
 // false to force uncolored output for testing, etc. Non-interactive
 // terminals have color disabled by default (unless ForceColor is set).
+//
 var Color = true
 
 // ForceColor forces color output no matter what the default Color value
 // is. This can be used for testing or associating with configuration
 // parameters (for example, when a user has a pager that supports color
 // output).
+//
 var ForceColor = false
 
-// Reg contains the Commands register. See CommandMap and Add.
+// Reg is the internal register (map) of Commands. See CommandMap and
+// Add. Use caution when manipulating Reg directly.
+//
 var Reg = NewCommandMap()
 
 // JSON serializes the current internal package register of commands as
 // JSON which can then be used to present documentation of the composite
-// command in different forms. Also see YAML. Empty values are always omitted.
+// command in different forms. Also see YAML. Empty values are always
+// omitted.
+//
 func JSON() string { return Reg.JSON() }
 
 // YAML serializes the current internal package register of commands as
 // YAML which can then be used to present documentation of the composite
 // command in different forms. Empty values are always omitted.
+//
 func YAML() string { return Reg.YAML() }
 
 // Print is shortcut for fmt.Println(cmdbox.YAML()) which is mostly only
 // useful during testing.
+//
 func Print() { Reg.Print() }
 
 // Init initializes (or re-initialized) the package status and empties
 // the internal commands register (without changing its reference).
 // Init is primarily intended for testing to reset the cmdbox package.
+//
 func Init() {
 	Reg.Init()
-	addHelp()
-	addVersion()
 }
 
-// Add creates a new Command, adds it to the internal register, and
+// Add creates a new Command, adds it to the Reg internal register, and
 // returns a pointer to it (assigned to 'x' by convention).  The Add
 // function is guaranteed to never return nil but will panic if invalid
 // arguments are passed (see Validation below).  Further initialization
 // can be done with direct assignments to fields of x from within the
-// init() function. By convention only one init() function with a single
-// Add call is allowed per file to maintain command modularity.
+// init() function. Depending on the situation, you may find having
+// a single init() that reuses x to Add multiple commands is desirable.
+// Other times, you may wish to keep one Command per file usually named
+// after the command.
 //
 // First Argument is Command Name
 //
 // The first argument is *always* the main Name by which it will be
 // called and becomes x.Name.  This uniquely identifies the Command and
-// becomes the key used by Call to lookup the Command from the internal
-// register for completion and execution.  By convention, these must be
-// speakable, complete words with absolutely no punctuation whatsoever.
-// (For performance reasons, no validation is performed on the Name.)
+// becomes the key used by cmdbox.Call to lookup the Command from the
+// internal register for completion and execution.  By convention, these
+// command names should be complete words with no punctuation except for
+// dot and applications will panic with names that do not follow this
+// convention. It is sometimes desirable to group multiple commands
+// using traditional dotted notation.
 //
 // Command Names May Contain Two Words
 //
-// The Name may contain two complete words separated by a single space.
-// This is to avoid collisions and facilitate default tab completion. It
+// The Name may contain two complete names separated by a single space.
+// Only main commands should have a single name. Subcommands should
+// always have two names to avoid naming collisions in Reg from other
+// imported cmdbox modules and facilitate default tab completion.  The
+// first name is also the name of the parent command. This
 // also removes indirection when called from Execute.
 //
 //    x := cmdbox.Add("foo help")
 //    x.Summary = `output help information for foo`
 //
-// Using two-word names is common when packaging subcommands with
-// commands in such a way as to disambiguate which subcommand is wanted
-// -- particularly when common words are used.
-//
-//    x := cmdbox.New("foo help")
-//
 // Commands May Have Subcommands
 //
 // Any variadic arguments that follow will be directly passed to
 // x.Add(). This provides a succinct summary of how the command may be
-// called. The h|help and version commands are added automatically to
-// all Commands with help being set to the x.Default (which can be
-// overriden).
+// called. As a convenience a h|help command can be added with
+// x.AddHelp(), but is not included automatically. Make sure to AddHelp
+// after Version, Copyright, and License have been set so that the LEGAL
+// section will populate correctly.
 //
-//    x := cmdbox.New("foo", "bar")
-//    // x.Default == "bar"
+//    x := cmdbox.Add("foo", "bar")
+//    x.Copyright = "2021 (c) Rob Muhlestein"
+//    x.AddHelp()
 //
 // Subcommands May Have Aliases
 //
@@ -138,7 +154,11 @@ func Init() {
 // than just a name) meaning it may have one or more aliases prefixed
 // and bar-delimited which are added to the x.Commands Map:
 //
-//    x := cmdbox.New("foo", "b|bar")
+//    x := cmdbox.Add("foo", "b|bar")
+//
+// Aliases will appear in the help documentation (from AddHelp) but will
+// not be options for completion even though they are valid commands.
+// This is to prevent the completion list from getting overwhelming.
 //
 // Default Usage Automatically Inferred
 //
@@ -148,39 +168,33 @@ func Init() {
 //
 //    x.Usage = `[b|bar]`
 //
-// Of course, this can always be overriden explicitly by Command
-// authors using the same assignment. Optional ([]) is the default since
-// any base command since help is automatically the default.
+// Of course, this can always be overridden explicitly by Command
+// authors using the same assignment.
 //
 // Command Method Has Priority
 //
 // When the Command (x) is called from cmdbox.Call the x.Commands Map is
 // used to delegate the call to a matching Command in the internal
 // register if and only if the Command itself does not have a Method
-// defined. See Call for more about this delegation on how it finds key
-// name matches in the internal register.
+// defined. Please read that last sentence carefully. See Call and
+// x.Call for more about this delegation and how key names
+// are matched to the internal register.
 //
-// All but top-level Commands will usually assign a x.Method to
-// handle the work of the Command. By convention the arguments should be
-// named "args" and no name given to the error returned:
+// All but top-level Commands will usually assign a x.Method to handle
+// the work of the Command. By convention the arguments should be named
+// "args" if something is expected and "none" if not. The returned error
+// type usually remains unnamed.
 //
-//    x.Method = func(args []string) error {
-//        fmt.Println("would do something")
-//        return nil
+//    x.Method = func(args ...string) error {
+//      fmt.Println("would do something")
+//      return nil
 //    }
-//
-// If a Command has a Method, then Call will pass all arguments as-is
-// allowing the Method to decide if they just arguments or keywords for
-// actions to be handled within that x.Method (usually within
-// a switch/case block). The Method may still cmdbox.Call() to delegate to
-// other registered Commands.
 //
 // No Command Method Will Trigger Default Delegation
 //
 // If the Command does not have an x.Method of its own, then the list of
 // arguments passed to Add is assumed to be the signatures for other
-// registered Commands that must eventually be populated by other
-// Command init() functions including subcommands of the given Command.
+// registered Commands.
 //
 // No Assertion of Command Registration
 //
@@ -200,10 +214,10 @@ func Init() {
 // some resolution by the composite developer who is importing them.
 //
 // Rather than override any Command previously added with an identical
-// Name, Add simply adds an underscore to the name allowing it to be
-// identified with Dups. Developer will know of such conflicts in advance
-// and be able to easily correct them by calling the Rename function
-// before Execute.
+// Name, Add simply adds an underscore (_) to the end of the name
+// allowing it to be identified with Dups. Developer will know of such
+// conflicts in advance and be able to easily correct them by calling
+// the Rename function before Execute.
 //
 func Add(name string, a ...string) *Command {
 	var x *Command
@@ -221,52 +235,62 @@ func Add(name string, a ...string) *Command {
 
 // Names returns a sorted list of all Command names in the internal
 // register.
+//
 func Names() []string { return Reg.Names() }
 
 // Dups returns key strings of duplicates (which can then be easily
 // renamed). Keys are sorted in lexicographic order. See Rename.
+//
 func Dups() []string { return Reg.Dups() }
 
-// Rename renames a Command in the Register by adding the
+// Rename renames a Command in the Reg register by adding the
 // new name with the same *Command and deleting the old one. This is
 // useful when a name conflict causes New to append and underscore (_)
 // to the duplicate's name. Rename can be called from init() at any
 // point after the duplicate has been added to resolve the conflict.
 // Note the order of init() execution --- while predictable --- is not
-// always apparent.  When in doubt do Rename from main() to be sure.
-// Rename is safe for concurrency.
+// always apparent.  When in doubt do Rename from main().  Rename is
+// safe for concurrency.
+//
 func Rename(from, to string) { Reg.Rename(from, to) }
 
 // Get returns the *Command for key name if found.
+//
 func Get(name string) *Command { return Reg.Get(name) }
 
 // Slice returns a slice of *Command pointers and fetched from the
 // internal register that match the key names passed.  If an entry is
 // not found it is simply skipped. Will return an empty slice if none
 // found.
+//
 func Slice(names ...string) []*Command { return Reg.Slice(names...) }
 
-// Set the internal register for the given key to the given *Command
-// pointer in a way that is safe for concurrency. Replaces entries that
-// already exist. Note that although this allows register key names to
-// refer to commands that have an actual x.Name that differs from the
-// key this is discouraged, which is why Add and Rename should generally
-// be used instead. Also see Add and Get.
+// Set sets the internal register for the given key to the given
+// *Command pointer in a way that is safe for concurrency. Replaces
+// entries that already exist. Note that although this allows register
+// key names to refer to commands that have an actual x.Name that
+// differs from the key this is discouraged, which is why Add and Rename
+// should generally be used instead. Also see Add and Get.
+//
 func Set(name string, x *Command) { Reg.Set(name, x) }
 
 // Delete deletes one or more commands from the internal register.
+//
 func Delete(names ...string) { Reg.Delete(names...) }
 
 // ---------------------- exit and error handling ---------------------
 
-// Exit calls os.Exit(0).
+// Exit calls os.Exit(0) unless DoNotExit has been set to true.
+//
 func Exit() {
 	if !DoNotExit {
 		os.Exit(0)
 	}
 }
 
-// ExitError prints err and exits with 1 return value.
+// ExitError prints err and exits with 1 return value unless DoNotExit
+// has been set to true.
+//
 func ExitError(err ...interface{}) {
 	switch e := err[0].(type) {
 	case string:
@@ -285,14 +309,20 @@ func ExitError(err ...interface{}) {
 	}
 }
 
+// ExitSyntaxError prints the bad syntax and calls ExitError().
+//
+func ExitSyntaxError(a string) { ExitError(SyntaxError(a)) }
+
 // ExitUnimplemented calls Unimplemented and calls ExitError().
+//
 func ExitUnimplemented(a string) { ExitError(Unimplemented(a)) }
 
 // TrapPanic recovers from any panic and more gracefully displays the
-// error as an exit message. It is used to gaurantee that no CmdBox
+// error as an exit message. It is used to gaurantee that no cmdbox
 // composite command will ever panic (exiting instead). It can be
 // redefined to behave differently or set to an empty func() to allow
 // the panic to blow up with its full trace log.
+//
 var TrapPanic = func() {
 	if r := recover(); r != nil {
 		ExitError(r)
@@ -301,6 +331,7 @@ var TrapPanic = func() {
 
 // TrapPanicNoExit is same as TrapPanic without exiting. It prints the
 // panic instead (useful for testing).
+//
 var TrapPanicNoExit = func() {
 	if r := recover(); r != nil {
 		fmt.Println(r)
@@ -308,9 +339,10 @@ var TrapPanicNoExit = func() {
 }
 
 // Unimplemented returns an unimplemented error for the Command passed.
-// This function may be overriden by CmdBox command modules from their
-// init and main methods to change behavior for everthing in the
+// This function may be overriden by command modules from their
+// init() and main() procedures to change behavior for everything in the
 // composite command. See "unimplemented" in Messages.
+//
 var Unimplemented = func(a string) error {
 	return fmt.Errorf(m_unimplemented, a)
 }
@@ -318,12 +350,14 @@ var Unimplemented = func(a string) error {
 // UsageError returns an error containing the usage string suitable for
 // printing directly.  This function may be overriden by CmdBox command
 // modules from their init and main methods to change behavior for
-// everthing in the composite command.
+// everything in the composite command.
+//
 var UsageError = func(x *Command) error {
 	return fmt.Errorf("usage: %v %v", x.Name, x.Usage)
 }
 
 // BadType returns an error containing the bad type attempted.
+//
 var BadType = func(v interface{}) error {
 	return fmt.Errorf(m_bad_type, v)
 }
@@ -332,6 +366,7 @@ var BadType = func(v interface{}) error {
 // exit status. This is useful for help and commands like it to help the
 // user disambiguate significant output from just help and other error
 // output.
+//
 var Harmless = func(msg ...string) error {
 	if len(msg) > 0 {
 		return fmt.Errorf("%v", msg[0])
@@ -341,19 +376,16 @@ var Harmless = func(msg ...string) error {
 
 // MissingArg returns an error stating that the name of the parameter
 // for which no argument was found.
+//
 var MissingArg = func(name string) error {
 	return fmt.Errorf(m_missing_arg, name)
 }
 
 // UnexpectedArg returns an error stating that the argument passed was
 // unexpected in the given context.
+//
 var UnexpectedArg = func(name string) error {
 	return fmt.Errorf(m_unexpected_arg, name)
-}
-
-// SyntaxErrorPanic panics with the message stating the problem.
-var SyntaxErrorPanic = func(msg string) {
-	panic(fmt.Sprintf(m_syntax_error, msg))
 }
 
 // SyntaxError returns an error with the message stating the problem.
@@ -363,22 +395,21 @@ var SyntaxError = func(msg string) error {
 
 // CallerRequired retuns an error indicating a Command was used
 // incorrectly (as designed by the developer) and that is requires being
-// called from something else. CmdBox command modules that cannot be
-// used as standalones are examples that would have an x.Method that
-// might return this error.
+// called from something else.
+//
 var CallerRequired = func() error {
 	return fmt.Errorf(m_missing_caller)
 }
 
 // --------------------- resolve / call / execute ---------------------
 
-// Resolve looks up a Command from the internal register based on the
-// caller and the name. If the Name of the caller and name passed,
+// Resolve looks up a Command from the internal Reg register based on
+// the caller and the name. If the Name of the caller and name passed,
 // joined with a space (a fully qualified entry) is found
 // then that is used instead of just the name. Otherwise, just the name
 // is looked up (which might itself already be fully qualified).  The
-// returned Command (x) is examined further to decide which Method and Args
-// to return:
+// returned Command (x) is examined further to decide which Method and
+// Args to return:
 //
 //   * If x.Method defined, call and return it with args unaltered
 //
@@ -396,7 +427,9 @@ var CallerRequired = func() error {
 //
 // By convention, passing a nil as the caller indicates the Command was
 // called from something besides another Command, usually the cmdbox
-// package itself. See Call, Command, ExampleResolve for more.
+// package itself or test cases. See Call, Command, ExampleResolve for
+// more.
+//
 func Resolve(caller *Command, name string, args []string) (Method,
 	[]string) {
 	var x *Command
@@ -467,8 +500,9 @@ func Resolve(caller *Command, name string, args []string) (Method,
 // to get the Command from the internal registry and lookup the proper
 // Method and any argument shifting required. If no Method is returned
 // Call returns Unimplemented. Otherwise, Method is called with its
-// arguments and error result returned.  See Resolve, Command, Execute,
-// and ExampleCall as well.
+// arguments and error result returned.  See command.Call, Resolve,
+// Command, Execute, and ExampleCall as well.
+//
 func Call(caller *Command, name string, args ...string) error {
 	defer TrapPanic()
 	if name == "" {
@@ -486,32 +520,29 @@ func Call(caller *Command, name string, args ...string) error {
 // to BusyBox) allows the binary to be renamed, hard or soft linked, or
 // copied, effectively changing the behavior simply by changing the
 // resulting changed name. For security reasons this name may never be
-// changed at runtime (even though some applications in the UNIX past
-// have employed such methods to communicate information through the
-// changed name of a running executable and the resulting ps command
-// output). When the Execute function is called without any arguments
-// the ExecutedAs value is inferred automatically.
+// changed at runtime. When the Execute function is called without any
+// arguments the ExecutedAs value is inferred automatically. Irrelevant
+// suffixes are removed (currently, only .exe).
+//
 func ExecutedAs() string { return executedAs }
 
-var executedAs = filepath.Base(os.Args[0])
+var executedAs = strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
 
 // Execute is the main entrypoint into a CmdBox composite command and is
-// always called from a main() function. In fact, most composite
-// commands that follow the CmdBox subcommand convention of putting each
-// into its own file will need nothing more than this in their main.go
-// file.
+// always called from a main() function. In fact, most won't need the
+// optional argument at all since it is inferred by the name of the
+// executable. See ExecutedAs.
 //
 //     package main
 //     import "github.com/rwxrob/cmdbox"
 //     func main() { cmdbox.Execute() }
 //
-// Execute first determines the name of the command to be executed
-// (explicitly passed or inferred from multicall binary, see ExecutedAs)
-// and assigns the command to cmdbox.Main; adds the builtin commands;
-// traps all panics; and finally Calls the Command. If completion
-// context is detected (see comp.Yes), Execute calls x.Complete instead
-// of Calling it. Execute is gauranteed to always exit the program
-// cleanly. See Call, TrapPanic, and Command.
+// Execute also traps all panics and eventually Calls the Command
+// matching the inferred name from the Reg Commands register. If
+// completion context is detected (see comp.Yes), Execute calls
+// x.Complete instead of Calling it. Execute is guaranteed to always
+// exit the program cleanly. See Call, TrapPanic, and Command.
+//
 func Execute(a ...string) {
 	defer TrapPanic()
 	var name string
@@ -525,8 +556,6 @@ func Execute(a ...string) {
 		ExitUnimplemented(name)
 	}
 	Main = x
-	x.Add("h|help")
-	x.Add("version")
 	x.UpdateUsage()
 	if comp.Yes() {
 		x.Complete()
