@@ -207,7 +207,7 @@ func NewCommand(name string, a ...string) *Command {
 
 	// panic unless valid command name
 	if !valid.Name(name) && name[len(name)-1] != '_' {
-		SyntaxErrorPanic(fmt.Sprintf(m_invalid_name, name))
+		ExitSyntaxError(fmt.Sprintf(m_invalid_name, name))
 	}
 
 	// initialize command with internal h|help and version
@@ -246,10 +246,13 @@ func (x *Command) Title() string {
 func (x *Command) Legal() string {
 	switch {
 	case len(x.Copyright) > 0 && len(x.License) > 0 && len(x.Version) > 0:
-		return x.Name + " " + x.Version + "\n" +
+		return x.Name + " (" + x.Version + ") " +
 			x.Copyright + "\nLicense " + x.License
 	case len(x.Copyright) > 0 && len(x.License) > 0:
-		return x.Name + "\n" + x.Copyright + "\nLicense " + x.License
+		return x.Name + " " + x.Copyright + "\nLicense " + x.License
+	case len(x.Copyright) > 0 && len(x.Version) > 0:
+		return x.Name + " (" + x.Version + ")" +
+			x.Copyright + "\nLicense " + x.License
 	case len(x.Copyright) > 0:
 		return x.Name + "\n" + x.Copyright
 	default:
@@ -404,6 +407,19 @@ func (x Command) Help() string {
 
 // PrintHelp simply prints what Help returns.
 func (x Command) PrintHelp() { fmt.Print(x.Help()) }
+
+func (x Command) AddHelp() {
+	x.Add("h|help")
+	h := Add(x.Name + " help")
+	h.Usage = `[COMMAND]`
+	h.Summary = `display command help information`
+	h.Description = `
+		Prints help information generally or for a specific command.`
+	h.Method = func(args ...string) error {
+		x.PrintHelp()
+		return nil
+	}
+}
 
 // ResolveDelegate returns a Command pointer looked up from the internal
 // register based on the following priority from more
