@@ -2,6 +2,7 @@ package util
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strings"
 )
@@ -23,22 +24,94 @@ type FilterF func(in string) (out string)
 // FilterReader.
 //
 func Filter(i interface{}, f FilterF) string {
-	var out, in string
 	switch v := i.(type) {
 	case io.Reader:
 		byt, err := io.ReadAll(v)
 		if err != nil {
 			return ""
 		}
-		in = string(byt)
+		return filterString(string(byt), f)
 	case string:
-		in = v
+		return filterString(v, f)
 	case []byte:
-		in = string(v)
+		return filterString(string(v), f)
+
+		// FIXME convert this shit to generics as soon as possible
+	case []interface{}, []string, [][]byte, [][]rune, []bool,
+		[]int, []int32, []int64, []uint32, []uint, []uint64,
+		[]float32, []float64:
+		return filterSlice(v, f)
+
+	default:
+		return filterString(fmt.Sprintf("%v", i), f)
 	}
-	scanner := bufio.NewScanner(strings.NewReader(in))
+}
+
+func filterString(s string, f FilterF) string {
+	out := ""
+	scanner := bufio.NewScanner(strings.NewReader(s))
 	for scanner.Scan() {
 		out += f(scanner.Text()) + "\n"
+	}
+	return out
+}
+
+// this redundancy thing will be completely unnecessary with generics
+func filterSlice(s interface{}, f FilterF) string {
+	out := ""
+	switch v := s.(type) {
+	case []interface{}:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []string:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case [][]byte:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case [][]rune:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []bool:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []int:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []int32:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []int64:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []uint32:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []uint:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []uint64:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []float32:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
+	case []float64:
+		for _, i := range v {
+			out += f(fmt.Sprintf("%v", i)) + "\n"
+		}
 	}
 	return out
 }
