@@ -33,7 +33,7 @@ func IsWord(w string) bool {
 		return false
 	}
 	for _, r := range w {
-		if !(unicode.IsLetter(r) && unicode.IsLower(r)) {
+		if !((unicode.IsLetter(r) && unicode.IsLower(r)) || r == '.') {
 			return false
 		}
 	}
