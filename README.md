@@ -1,4 +1,4 @@
-# 🍱 Go CmdBox Composite Commander
+# 🍱 Go cmdbox Composite Commander
 
 [![GoDoc](https://godoc.org/github.com/rwxrob/cmdbox?status.svg)](https://godoc.org/github.com/rwxrob/cmdbox)
 [![License](https://img.shields.io/badge/license-Apache2-brightgreen.svg)](LICENSE)
@@ -7,15 +7,14 @@
 *A composite commander for modern human-computer text interactions.*
 
 > "It's like a modular, multicall BusyBox builder for Go with built in
-> completion and multi-lingual, embedded documentation support."
+> completion and embedded documentation support."
 
- > "The utility here is that cmdbox lets you
- maintain your own personal 'toolbox' with built in auto-complete that
- you can assemble from various Go modules. Individual commands are
- isolated and unaware of each other and possibly maintained by other
- people." (tadasv123)
+> "The utility here is that cmdbox lets you maintain your own personal
+> 'toolbox' with built in auto-complete that you can assemble from
+> various Go modules. Individual commands are isolated and unaware of
+> each other and possibly maintained by other people." (tadasv123)
 
-*CmdBox* is a lightweight commander for creating commands composed of
+*cmdbox* is a lightweight commander for creating commands composed of
 modular subcommands that can be imported as packages with portable
 completion and embedded documentation compiled into a single, minimal,
 multicall binary.
@@ -27,16 +26,16 @@ Normally you would simply `import "github.com/rwxrob/cmdbox"`.
 ## Advantages
 
 * Build the command-line interface to your application completely
-  independently from your core API library.
+  independently from your core API library
 
-* Automatic and extendible Bash tab completion built in.
+* Automatic and extendible bash tab completion built in
 
-* Modular, interchangeable, readable subcommands.
+* Modular, interchangeable, readable subcommands
 
 * Commands can be used standalone or as multicall-enabled subcommands of
-  a composite binary (think BusyBox).
+  a composite binary (think BusyBox)
 
-* Rich ecosystem of importable `cmdbox-*` commands.
+* Rich ecosystem of importable `cmdbox-*` commands
 
 # Terminology
 
@@ -51,18 +50,18 @@ package with a `main` function.
 
 ## How It Works
 
-The magic of *CmdBox* comes from the clean separation of *Commands*
-into their own files --- or even separate packages imported as `_` with
-their own Git repos --- and composing them into a single multicall
-binary that contains an internal register of these Commands. This is
-accomplished through simple, judicious use of the `init()` function in
-each file. This approach incurs no more performance hit than would
+The magic of *cmdbox* comes from the clean separation of *Commands* into
+their own files --- or even separate packages imported as "side-effects"
+(`_`) with their own Git repos --- and composing them into a single
+multicall binary that contains an internal register of these Commands.
+This is accomplished through simple, judicious use of the `init()`
+function. This approach incurs no more performance hit than would
 already be required for any other such solution and is 100% safe for
 concurrency.
 
 By the time the command-line application's `main()` function is called
-all it has to do is `cmdbox.Execute()` to execute the top-level
-command. A typical `main.go` needs no more than three lines:
+all it has to do is `cmdbox.Execute()` the top-level command. A typical
+`main.go` needs no more than three lines:
 
 ```go
 package main
@@ -70,8 +69,12 @@ import "github.com/rwxrob/cmdbox"
 func main() { cmdbox.Execute() }
 ```
 
+The name of the main command may be passed to `Execute("mymain")` or can
+be left off and inferred from the name of the binary instead.
+
 The bulk of the code is kept in one or more other modular Command files
-such as this sample (the package name almost never matters):
+such as this sample (the package name usually does not matter, `cmd` is
+used by convention):
 
 ```go
 
@@ -80,20 +83,23 @@ package cmd
 import (
     "fmt"
     "github.com/rwxrob/cmdbox"
-    _ "github.com/rwxrob/cmdbox-help"
-    _ "github.com/rwxrob/cmdbox-version"
 )
 
 func init() {
-    x := cmdbox.Add("foo","h|help","v|version")
-    x.Summary = `foo the things`
-    x.Usage = `[h|help|v|version]`
+    x := cmdbox.Add("greet")
+    x.Summary = `print a polite greeting`
+    x.Usage = `[NAME]`
     x.Copyright = `Copyright 2021 Rob Muhlestein`
     x.License = `Apache-2`
     x.Version = `v1.0.0`
+    x.AddHelp()
     // ...
-    x.Method = func(args []string) error {
-        fmt.Println("would foo all the things")
+    x.Method = func(args ...string) error {
+        name = "you"
+        if len(args) > 0 {
+            name = args[0]
+        }
+        fmt.Printf("Well, hello there, %v!\n",name)
         return nil
     }
 }
@@ -110,25 +116,27 @@ between different projects and repos, or just factored out entirely and
 imported freely by anything. If there are naming conflicts, the
 cmdbox.Rename provides for easy, explicit renames as needed.
 
+The `x.AddHelp()` helper method will add a nice default `h|help` command
+that includes a summary of the legal information.
+
 ## Motivation
 
 This package scratches several "personal itches" that have come up from
 the needs of modern human-computer interaction and annoyances with the
 popular alternatives:
 
-1. No commanders exist for writing simple, speakable interfaces
-1. No commanders exist that know anything about tab completion internally
-1. Tab completion is the simplest way to provide good help to the user
-1. Getopt-style options are ancient, bad HCI
-1. More users are voicing their commands rather than typing them
-1. More users are using keyboard input with their thumbs
-1. Modern command-line programs need to be easily distributed
-1. Separating docs from the program is a modern anti-pattern
-1. Tab completion resolution is faster and easier in Go
-1. Alternatives act like they have never seen `complete -C foo foo`
+1. No commanders exist for writing simple interfaces (no dashes)
+1. Separating documentation from a program is a modern anti-pattern
+1. No commanders exist with internal tab completion
 1. Sourcing shell completion is a bloated, modern anti-pattern
-1. Why create a package when a single executable will do?
-1. Embedded, multi-lingual documentation is non-existent today
+1. `kubectl` requires sourcing 12637 lines in `.bashrc` for completion
+1. Applications with cmdbox require 1 line (`complete -C foo foo`)
+1. Completion resolved by the application itself is more powerful
+1. Tab completion is the simplest way to provide good help to the user
+1. Tab completion resolution is faster and easier in Go
+1. Getopt-style options have always been bad UI/HCI
+1. Modern command-line interfaces depend more on stateful context
+1. Modern command-line programs need to be easily distributed
 
 ### Times Have Changed
 
@@ -145,16 +153,18 @@ pages) and tab completion (`/etc/bash_complete`). This forced software
 delivery to invent the package management systems we see today. Shipping
 everything in a single executable was simply unthinkable.
 
-Today Go has revolutionized applications development and respectfully
-embraced modern use of resources. Static linking, multicall binaries,
-cross-compilation, built in concurrency, reflection and documentation
-are all evidence of how time have changed. It follows then, that our
-command interface designs and documentation approaches should be equally
-modernized. There is now plenty of room to compose several commands and
-subcommands into a single, composite, multicall binary executable. In
-fact, this has become idiomatic for Go's own tool set and popularized by
-the container-world's love for BusyBox. Distribution and portability are
-more important than memory and storage size these days.
+Today the Go programming language has revolutionized applications
+development and respectfully embraced modern use of resources. Static
+linking, multicall binaries, in which an entire embedded filesystem can
+be included, and cross-compilation, built in concurrency, reflection and
+documentation are all evidence of how times have changed. It follows
+then, that our command interface designs and documentation approaches
+should be equally modernized. There is now plenty of room to compose
+several commands and subcommands into a single, composite, multicall
+binary executable. In fact, this has become idiomatic for Go's own tool
+set and popularized by the container-world's love for BusyBox.
+Distribution and portability are more important than memory and storage
+size these days.
 
 ### Sometimes You Just Need Tab
 
@@ -204,7 +214,7 @@ Because only amazing technical people are using the command line?
 Perhaps. But that is a very bad reason. Interfaces need not be overly
 complex or difficult to memorize just because most users are technical.
 
-The *CmdBox* approach takes these HCI considerations very seriously
+The *cmdbox* approach takes these HCI considerations very seriously
 placing priority on how humans use modern command-line interfaces and
 developing them accordingly. Human interaction is the single most
 important design decision for any application, including one that runs
@@ -221,19 +231,17 @@ have before choosing to use it.
 * Several "cool" things have been dropped. This has resulted in a code
   base that seems deceptively simple, even trivial. That is by design,
   and came after many hours of refactoring different approaches over the
-  years. Developers can now create "cool" additions by implementing their
-  own `cmdbox-*` packages and leaving the core `cmdbox` package alone.
-  Such an ecosystem is far more beneficial to the community as a whole.
+  years. Developers can now create "cool" additions by implementing
+  their own `cmdbox-*` packages and leaving the core `cmdbox` package
+  alone. Such an ecosystem is far more beneficial to the community as a
+  whole.
 
 * Any shell or system that sets the `COMP_LINE` environment and allows
   the targeting of the same command being called to complete itself (ex:
-  `complete -C foo foo`) is supported. This obviously includes only Bash
-  at the moment, but could easily be added to other existing and
-  future shells. This established mechanism for communicating *completion
-  context* is not only mature but simple and trivial to implement.
-  The upcoming `cmdbox-ash` CmdBox command module will provide a POSIX
-  compliant shell with CmdBox compatible tab completion (as inspired by
-  BusyBox).
+  `complete -C foo foo`) is supported. This obviously includes only bash
+  at the moment, but could easily be added to other existing and future
+  shells. This established mechanism for communicating *completion
+  context* is not only mature but simple and trivial to implement. 
 
 * Aliases for Commands can be used for alternative languages as well
   providing multi-lingual speakable command line interface
@@ -246,32 +254,25 @@ have before choosing to use it.
 * Dashes on the command line have always been a bad idea, even more so
   now. The world has suffered enough from dubious design decisions made
   decades ago in the `getops` world when string sizes were limited and
-  usernames no more than eight characters. Beginning anything but
-  negative numbers with dashes on the command line has *always* been an
-  HCI UX anti-pattern that we tolerated when we had to, expanded on when
-  we could (with "long" options), and can now gratefully dismiss. As
-  Unicode has standardized, and subcommand composites such at `git`,
-  `kubectl`, `docker`, `gh` and others like them have become standard
-  practice --- along with the rise of conversational interfaces that
-  transform any command line into a speakable user interface --- it is
-  time we started giving our programs support for written natural
-  language grammars. Not only will our code and command lines be more
-  readable but more accessible allowing the tried-and-true command line
-  interface model to extend to chat services, conversational assistants,
-  and voice-enabled devices. 
+  usernames no more than eight characters. Thankfully, we can now
+  dismiss these bad practices. As Unicode has standardized, and
+  subcommand composites such at `git`, `kubectl`, `docker`, `gh` and
+  others like them have become standard practice --- along with the rise
+  of conversational interfaces that transform any command line into a
+  speakable user interface --- it is time we started giving our programs
+  support for written natural language grammars. Not only will our code
+  and command lines be more readable but more accessible allowing the
+  tried-and-true command line interface model to extend to chat
+  services, conversational assistants, and voice-enabled devices. In
+  fact, cmdbox is ideal for creating modular (but monolithic) chat bots
+  of all kinds.
 
-* At one point the base `cmdbox` package contained a "builtin" `help`
-  and `version` subcommand but they were both factored into the
-  `cmdbox-help` package instead. This reduces potential bloat for
-  composites that do not need them and better provides for independent
-  multi-lingual support. 
-
-* Originally a custom, Markdown-derived syntax was supported for the
+* Originally, a custom, Markdown-derived syntax was supported for the
   text of all Command fields. This has been removed for now and will be
   reconsidered at a later date with proposals from the community. For
   now, the convention is to use nothing but regular text with no attempt
   to provide any type of formatting markup. It is critical that the
-  CmdBox community agree on a markup standard, if any. While CmdBox
+  cmdbox community agree on a markup standard, if any. While cmdbox
   plans to improve on the austerity of Go doc (allowing for color,
   emphasis, and such) this has to be considered as carefully as the base
   `cmdbox` API itself.
@@ -286,24 +287,26 @@ have before choosing to use it.
   is at least as appropriate as these standard keywords are included in
   many other contexts `help`, `version`, and `usage` are very
   ubiquitous. If needed, these can be aliased easily by adding commands
-  that encapsulate them with `Call()`.
+  that encapsulate them with `Call()` or the commands themselves can be
+  front-end shells to high-level library API calls.
 
 * Using `structs` instead of `interfaces` makes more sense given the
-  serialization goals to enable quick and easy to read and write documentation embedded in the source.
+  serialization goals to enable quick and easy to read and write
+  documentation embedded in the source.
 
 * Use of aliases (`d|del|rm|delete`) allows accessibility even if tab
   completion is not (yet) supported on a particular platform. This
-  provides multi-language support possibilities as well.
+  provides minimal multi-language support possibilities as well.
 
 * At one point the internal `map[string]*Command` index was private to
   discourage tight coupling between commands and prevent "innovation"
-  that could fork away simplicity as a core tenet of the CmdBox project.
+  that could fork away simplicity as a core tenet of the cmdbox project.
   But it was decided that this inflexibility came at too great a cost to
   potential needs of command creators and `cmdbox.Reg()` was added. 
 
-* Naming of `cmdtab-*` module repos allows for easy discovery. Using the
-  conventional `cmd` package name (which is ignored at `init` time)
-  allows consistency for generators and cataloging.
+* Naming of `cmdbox-*` module repos allows for easy discovery. Using the
+  conventional `cmd`/`cmd.go` package/file name (which is ignored at
+  `init` time) allows consistency for generators and cataloging.
 
 ## How Does Completion Work?
 
@@ -321,7 +324,7 @@ complete -C foo foo
 
 This will cause the shell to run `foo` and set the `COMP_LINE`
 environment variable every time you tap the tab key once or twice. This
-allows a CmdBox composite program to detect completion context and only
+allows a cmdbox composite program to detect completion context and only
 print the words that should be possible for the last word of the command
 when the tab key was pressed. (Also see Go documentation of the
 Command.Complete method.)
@@ -335,15 +338,15 @@ machine learning code module could be added allowing any possible speech
 completion. Such considerations seem very absent from the HCI
 conversation regarding terminal command line usage in the past, but
 times are changing. Phone, OpenCV, natural language processing and many
-other innovations are bringing the focus (rightly) back to speakable user
-interfaces of all kinds. 
+other innovations are bringing the focus (rightly) back to speakable
+user interfaces of all kinds. 
 
 ## Does this have anything to do with BusyBox?
 
-*CmdBox* originally started as `cmdtab` and was used for more than two
+*cmdbox* originally started as `cmdtab` and was used for more than two
 years before Rob realized [BusyBox](https://busybox.net) was even a
 thing. The name was changed when it became clear just how close to
-BusyBox CmdBox is in approach and purpose, even if the design and
+BusyBox cmdbox is in approach and purpose, even if the design and
 implementation are completely different.
 
 Here are the similarities:
@@ -364,22 +367,25 @@ Here are the major differences:
 
 ## Why Not Just `import flag`?
 
-Nothing wrong with that if you are okay with dashes and such. CmdBox is
+Nothing wrong with that if you are okay with dashes and such. cmdbox is
 designed for more.
 
 ## What about Cobra?
 
+*Cobra is the Electron of command-line interface libraries.*
+
 While Cobra is popular and Steve and the rest of the contributors are
 wonderful, talented people. Cobra has codified several anti-patterns
-into rather large applications that have spread like cancer. 
+into rather large applications that have spread like cancer wasting
+resources and breaking `.*rc` files with wild abandon. For example,
+`kubectl` requires the sourcing of 12637 lines of bash code every time a
+new shell spawns, and that is only one Cobra application. There are many
+others.
 
-Consider that the output of `kubectl completion bash` is more than
-14,000 lines long and that the project recommends "sourcing" or
-"evaling" all of them from your `.bashrc` file. That is just a single
-project that uses Cobra. Considering that Cobra is used for most
-cloud-native related applications it is not hyperbole to say that tens
-of thousands of people are evaluating 50,000+ lines of code every time
-they start a new Bash shell. 
+Considering that Cobra is used for most cloud-native related
+applications it is not hyperbole to say that tens of thousands of people
+are evaluating 50,000+ lines of code every time they start a new Bash
+shell. 
 
 While there are ways around this, the simplest has been completely
 overlooked by the Cobra project: `complete -C foo foo`. The project now
@@ -389,42 +395,38 @@ something radically new is needed.
 
 Beyond that, Cobra missed an amazing opportunity to create a modular
 ecosystem of composable commands by leveraging `init()` side-effect
-imports (`_`). CmdBox takes full and appropriate advantage of these
+imports (`_`). cmdbox takes full and appropriate advantage of these
 amazing Go features. Cobra's syntax for `init()` is anything *but*
-clean. CmdBox `init()` bodies are sexy, simple, and self-documenting. In
+clean. cmdbox `init()` bodies are sexy, simple, and self-documenting. In
 fact, they usually *contain* the documentation itself in readable,
-simple text that is rendered much like an embedded "man" page if the
-`cmdtab-help` module is imported, or left out entirely for ultra-light
-container-friendly composite commands, cousins of BusyBox.
+simple text that is rendered much like an embedded "man" page.
 
 ## Terminology
 
 * **command** - `foo` or `mycmd foo`
 * **tool** - another name for *command*
-* **module** - a Go module containing CmdBox
+* **module** - a Go module containing cmdbox
 * **composite** - final binary composed of multiple commands
 
 ## Conventions
 
 * Prefix repos with `cmdbox-` for easy discovery.
 * Use `x` for Command pointer `func init() {x := cmdbox.Add("name")}`
+* Reuse `x` when adding multiple commands in same `init()`
 * Use `x` for Command method receivers `func (x *Command) ...`
 
 ## Real World Examples
 
-* <https://github.com/rwxrob/kn>
 * <https://github.com/rwxrob/cmdbox-pomo>
 * <https://github.com/rwxrob/cmdbox-config>
-* <https://github.com/rwxrob/cmdbox-twitch>
-* <https://github.com/rwxrob/auth-go/cmd/auth>
 
 ## Legal 
 
 Copyright 2021 Robert S. Muhlestein (<mailto:rob@rwx.gg>)  
 Licensed under Apache-2.0
 
-"CmdBox" and "cmdbox" are legal trademarks of Robert S. Muhlestein but
-can be used freely to refer to the CmdBox project
+"cmdbox" and "cmdbox" are legal trademarks of Robert S. Muhlestein but
+can be used freely to refer to the cmdbox project
 <https://github.com/rwxrob/cmdbox> without limitation. To avoid
 potential developer confusion, intentionally using these trademarks to
 refer to other projects --- free or proprietary --- is prohibited.
