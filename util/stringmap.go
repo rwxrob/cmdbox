@@ -24,12 +24,13 @@ import (
 	"sync"
 )
 
-// StringMap is a high-level type used to contain string data for both keys
-// and values Developers can use the StringMap type in their own modules as
-// a convenience since requires less declaration and is 100% safe for
-// concurrency (embeds synx.Mutex). The internal map is exported (as M) for
-// when developers want to do their own locking and mutations rather
-// than use the public interface methods.
+// StringMap is a high-level type used to contain string data for both
+// keys and values Developers can use the StringMap type in their own
+// modules as a convenience since requires less declaration and is 100%
+// safe for concurrency (embeds synx.Mutex). The internal map is
+// exported (as M) for when developers want to do their own locking and
+// mutations rather than use the public interface methods.
+//
 type StringMap struct {
 	M map[string]string
 	sync.Mutex
@@ -37,6 +38,7 @@ type StringMap struct {
 
 // NewStringMap returns a new StringMap with the internal
 // map[string]string initialized.
+//
 func NewStringMap() *StringMap {
 	m := new(StringMap)
 	m.Init()
@@ -45,6 +47,7 @@ func NewStringMap() *StringMap {
 
 // ToStringMap converts a map[string]interface{} into a StringMap
 // creating all new map values (concurrency safe clone).
+//
 func ToStringMap(m map[string]interface{}) *StringMap {
 	n := NewStringMap()
 	defer n.Unlock()
