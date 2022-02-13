@@ -67,7 +67,8 @@ func ExampleNewStringMap() {
 	m.Print()
 
 	// Output:
-	// {}{
+	// {}
+	// {
 	//     "foo": "bar"
 	//   }
 
@@ -101,7 +102,8 @@ func ExampleStringMap_Init() {
 	// Output:
 	// {
 	//     "foo": "bar"
-	//   }{}
+	//   }
+	// {}
 }
 
 func ExampleStringMap_Get() {
@@ -142,7 +144,8 @@ func ExampleStringMap_Delete() {
 	//     "bar": "2",
 	//     "foo": "1",
 	//     "you": "3"
-	//   }{
+	//   }
+	// {
 	//     "you": "3"
 	//   }
 
@@ -353,7 +356,8 @@ func ExampleStringMap_Rename() {
 	// Output:
 	// {
 	//     "foo": "val"
-	//   }{
+	//   }
+	// {
 	//     "bar": "val"
 	//   }
 

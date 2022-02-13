@@ -352,7 +352,7 @@ func (m StringMap) JSON() string { return MustJSON(m.M) }
 func (m StringMap) String() string { return MustJSON(m.M) }
 
 // Print outputs as JSON (nice when testing).
-func (m StringMap) Print() { fmt.Print(MustJSON(m.M)) }
+func (m StringMap) Print() { fmt.Println(MustJSON(m.M)) }
 
 // MarshalJSON implements the json.Marshaler interface using the
 // internal (M) map.
