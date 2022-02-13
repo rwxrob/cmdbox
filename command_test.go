@@ -30,7 +30,6 @@ func ExampleNewCommand_simple() {
 	// Output:
 	// name: foo
 	// commands: {}
-	// default: help
 
 }
 
@@ -41,7 +40,6 @@ func ExampleNewCommand_subcommand() {
 	// Output:
 	// name: foo bar
 	// commands: {}
-	// default: help
 
 }
 

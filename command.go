@@ -321,12 +321,12 @@ func (x *Command) Add(sigs ...string) {
 		aliases := strings.Split(sig, "|")
 		name := aliases[len(aliases)-1]
 		if !valid.Name(name) {
-			panic(m_invalid_name)
+			ExitSyntaxError(fmt.Sprintf(m_invalid_name, name))
 		}
 		x.Commands.Set(name, name)
 		for _, alias := range aliases {
 			if !valid.Name(alias) {
-				panic(m_invalid_name)
+				ExitSyntaxError(fmt.Sprintf(m_invalid_name, name))
 			}
 			x.Commands.Set(alias, name)
 		}

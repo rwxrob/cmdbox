@@ -24,9 +24,13 @@ import (
 
 func ExampleReg() {
 	cmdbox.Init() // just for testing
+
+	// by default the internal registry is empty but initialized
+
 	fmt.Println(cmdbox.Reg.Names())
+
 	// Output:
-	// [help version]
+	// []
 }
 
 func ExampleJSON() {
@@ -51,9 +55,9 @@ func ExampleInit() {
 	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// [help version]
-	// [foo help version]
-	// [help version]
+	// []
+	// [foo]
+	// []
 
 }
 
@@ -63,7 +67,7 @@ func ExampleAdd_simple() {
 	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// [foo help version]
+	// [foo]
 }
 
 func ExampleAdd_with_Subcommands() {
@@ -73,7 +77,7 @@ func ExampleAdd_with_Subcommands() {
 	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// [foo foo bar help version]
+	// [foo foo bar]
 
 }
 
@@ -86,7 +90,7 @@ func ExampleAdd_with_Duplicates() {
 
 	// Output:
 	// [foo_]
-	// [foo foo_ help version]
+	// [foo foo_]
 
 }
 
@@ -97,7 +101,7 @@ func ExampleNames() {
 	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// [bar foo help version]
+	// [bar foo]
 
 }
 
@@ -109,7 +113,7 @@ func ExampleRename() {
 	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// [bar foo help version]
+	// [bar foo]
 
 }
 
@@ -120,10 +124,9 @@ func ExampleGet() {
 
 	// Output:
 	// name: foo
-	// usage: '[bar]'
+	// usage: bar
 	// commands:
 	//   bar: bar
-	// default: help
 }
 
 func ExampleSlice() {
@@ -164,8 +167,8 @@ func ExampleDelete() {
 	fmt.Println(cmdbox.Names())
 
 	// Output:
-	// [bar foo help version]
-	// [foo help version]
+	// [bar foo]
+	// [foo]
 
 }
 
@@ -211,9 +214,9 @@ func ExampleResolve() {
 	}
 
 	// Output:
-	// greet []
-	// greet ["h"]
-	// greet ["hi"]
+	// failed: greet []
+	// failed: greet ["h"]
+	// failed: greet ["hi"]
 	// Privyetgreet russian ["hi"]
 	// Privyetrussian ["hi"]
 
@@ -264,53 +267,10 @@ func ExampleExecute_no_Method() {
 	cmdbox.ExitOff()
 	defer cmdbox.ExitOn()
 
-	x := cmdbox.Get("help")
-	x.Method = func(args ...string) error {
-		return x.Unimplemented("foo")
-	}
-
-	cmdbox.Add("foo")
+	cmdbox.Add("foo", "some")
 	cmdbox.Execute("foo")
 
 	// Output:
-	// unimplemented: foo
-
-}
-
-func ExampleExecute_unimplemented_Default() {
-	cmdbox.Init() // just for testing
-	cmdbox.ExitOff()
-	defer cmdbox.ExitOn()
-
-	x := cmdbox.Get("help")
-	x.Method = func(args ...string) error {
-		return x.UsageError()
-	}
-
-	cmdbox.Add("foo")
-	cmdbox.Execute("foo")
-
-	// Output:
-	// usage: help [<command>]
-
-}
-
-func ExampleExecute_first_Is_Default() {
-	cmdbox.Init() // just for testing
-	cmdbox.ExitOff()
-	defer cmdbox.ExitOn()
-
-	cmdbox.Add("foo", "h|help")
-
-	h := cmdbox.Add("foo help")
-	h.Method = func(args ...string) error {
-		fmt.Println("would show foo help")
-		return nil
-	}
-
-	cmdbox.Execute("foo")
-
-	// Output:
-	// would show foo help
+	// usage: foo some
 
 }
