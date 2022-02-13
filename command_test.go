@@ -28,8 +28,10 @@ func ExampleNewCommand_simple() {
 	x := cmdbox.NewCommand("foo")
 	x.Print()
 	// Output:
-	// name: foo
-	// commands: {}
+	// {
+	//     "name": "foo",
+	//     "commands": {}
+	//   }
 
 }
 
@@ -38,13 +40,17 @@ func ExampleNewCommand_subcommand() {
 	x := cmdbox.NewCommand("foo bar")
 	x.Print()
 	// Output:
-	// name: foo bar
-	// commands: {}
+	// {
+	//     "name": "foo bar",
+	//     "commands": {}
+	//   }
 
 }
 
 func ExampleNewCommand_invalid() {
-	defer cmdbox.TrapPanicNoExit()
+	cmdbox.Init()
+	cmdbox.ExitOff()
+	defer cmdbox.ExitOn()
 	cmdbox.NewCommand("Foo") // see valid/name.go for more
 
 	// Output:
@@ -54,10 +60,12 @@ func ExampleNewCommand_invalid() {
 func ExampleNewCommand_dup() {
 	x := cmdbox.NewCommand("foo_")
 	x.Print()
+
 	// Output:
-	// name: foo_
-	// commands: {}
-	// default: help
+	// {
+	//     "name": "foo_",
+	//     "commands": {}
+	//   }
 
 }
 
@@ -65,28 +73,55 @@ func ExampleNewCommand_commands() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.NewCommand("foo", "h|help", "l|ls|list")
 	x.Print()
+
 	// Output:
-	// name: foo
-	// usage: '[h|help|l|list|ls]'
-	// commands:
-	//   h: help
-	//   help: help
-	//   l: list
-	//   list: list
-	//   ls: list
-	// default: help
+	// {
+	//     "name": "foo",
+	//     "usage": "(h|help|l|list|ls)",
+	//     "commands": {
+	//       "h": "help",
+	//       "help": "help",
+	//       "l": "list",
+	//       "list": "list",
+	//       "ls": "list"
+	//     }
+	//   }
+
 }
 
 func ExampleCommand_JSON() {
 	cmdbox.Init() // just for testing
-	x := cmdbox.NewCommand("foo", "help")
+	x := cmdbox.NewCommand("foo", "some")
+
+	fmt.Println(x.RawJSON())
 	fmt.Println(x.JSON())
 	fmt.Println(x.String())
 	fmt.Println(x)
+
 	// Output:
-	// {"name":"foo","usage":"[help]","commands":{"help":"help"},"default":"help"}
-	// {"name":"foo","usage":"[help]","commands":{"help":"help"},"default":"help"}
-	// {"name":"foo","usage":"[help]","commands":{"help":"help"},"default":"help"}
+	// {"name":"foo","usage":"some","commands":{"some":"some"}}
+	// {
+	//     "name": "foo",
+	//     "usage": "some",
+	//     "commands": {
+	//       "some": "some"
+	//     }
+	//   }
+	// {
+	//     "name": "foo",
+	//     "usage": "some",
+	//     "commands": {
+	//       "some": "some"
+	//     }
+	//   }
+	// {
+	//     "name": "foo",
+	//     "usage": "some",
+	//     "commands": {
+	//       "some": "some"
+	//     }
+	//   }
+
 }
 
 func ExampleCommand_Title() {
@@ -95,6 +130,7 @@ func ExampleCommand_Title() {
 	fmt.Println(x.Title())
 	x.Summary = "just a foo"
 	fmt.Println(x.Title())
+
 	// Output:
 	// foo
 	// foo - just a foo
@@ -110,12 +146,10 @@ func ExampleCommand_Legal() {
 	fmt.Println(x.Legal())
 	x.License = "Apache-2"
 	fmt.Println(x.Legal())
+
 	// Output:
-	//
-	// foo
-	// Copyright 2021 Rob
-	// foo v0.0.1
-	// Copyright 2021 Rob
+	// foo (v0.0.1) Copyright 2021 Rob
+	// foo (v0.0.1) Copyright 2021 Rob
 	// License Apache-2
 
 }
@@ -125,16 +159,20 @@ func ExampleCommand_Add() {
 	x := cmdbox.NewCommand("foo")
 	x.Add("l|ls|list", "h|help", "version")
 	x.Print()
+
 	// Output:
-	// name: foo
-	// commands:
-	//   h: help
-	//   help: help
-	//   l: list
-	//   list: list
-	//   ls: list
-	//   version: version
-	// default: help
+	// {
+	//     "name": "foo",
+	//     "commands": {
+	//       "h": "help",
+	//       "help": "help",
+	//       "l": "list",
+	//       "list": "list",
+	//       "ls": "list",
+	//       "version": "version"
+	//     }
+	//   }
+
 }
 
 func ExampleCommand_Complete_commands() {
@@ -159,6 +197,7 @@ func ExampleCommand_Complete_compFunc() {
 	x.Complete()
 	comp.This = "b"
 	x.Complete()
+
 	// Output:
 	// bar
 	// this
@@ -192,9 +231,12 @@ func ExampleCommand_Sigs() {
 	x.Sigs().Print()
 
 	// Output:
-	// bar: bar
-	// help: h|help
-	// version: version
+	// {
+	//     "bar": "bar",
+	//     "help": "h|help",
+	//     "version": "version"
+	//   }
+
 }
 
 func ExampleCommand_Titles() {
@@ -280,29 +322,3 @@ func ExampleCommand_Resolve_subcommand() {
 	// bar
 	// bar
 }
-
-/*
-// TODO
-func ExampleCommand_PrintHelp() {
-	cmdbox.Init() // just for testing
-	x := cmdbox.Add("foo", "bar", "other", "p|print", "c|comp|complete")
-
-	b := cmdbox.Add("bar")
-	b.Summary = `does bar stuff`
-
-	h := cmdbox.Add("other")
-	h.Summary = `other stuff`
-
-	p := cmdbox.Add("print")
-	p.Summary = `prints stuff`
-
-	c := cmdbox.Add("complete")
-	c.Summary = `complete stuff`
-
-	x.PrintHelp()
-
-	// Output:
-	// NAME
-
-}
-*/

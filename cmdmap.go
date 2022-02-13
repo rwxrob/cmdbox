@@ -46,18 +46,11 @@ func NewCommandMap() *CommandMap {
 	return m
 }
 
-// Init initializes (or re-initialized) the CommandMap deleting all its
-// values (without changing its reference).
-func (m *CommandMap) Init() {
-	m.Lock()
+// Set set a value by key name safe in a way that is for concurrency.
+func (m *CommandMap) Set(key string, val *Command) {
 	defer m.Unlock()
-	if m.M == nil {
-		m.M = make(map[string]*Command)
-		return
-	}
-	for k := range m.M {
-		delete(m.M, k)
-	}
+	m.Lock()
+	m.M[key] = val
 }
 
 // Get returns a Command pointer by key name safe for concurrency.
@@ -71,11 +64,18 @@ func (m *CommandMap) Get(key string) *Command {
 	return nil
 }
 
-// Set set a value by key name safe in a way that is for concurrency.
-func (m *CommandMap) Set(key string, val *Command) {
-	defer m.Unlock()
+// Init initializes (or re-initialized) the CommandMap deleting all its
+// values (without changing its reference).
+func (m *CommandMap) Init() {
 	m.Lock()
-	m.M[key] = val
+	defer m.Unlock()
+	if m.M == nil {
+		m.M = make(map[string]*Command)
+		return
+	}
+	for k := range m.M {
+		delete(m.M, k)
+	}
 }
 
 // Delete removes one or more entries from the map in a way that is safe
@@ -170,4 +170,4 @@ func (m CommandMap) JSON() string { return util.MustJSON(m.M) }
 func (m CommandMap) String() string { return util.MustJSON(m.M) }
 
 // Print outputs as JSON (nice when testing).
-func (m CommandMap) Print() { fmt.Print(util.MustJSON(m.M)) }
+func (m CommandMap) Print() { fmt.Println(util.MustJSON(m.M)) }

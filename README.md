@@ -124,16 +124,16 @@ func init() {
 
 This code can now be used *both* as a standalone `foo` program or
 imported by other composites with `import
-"github.com/rwxrob/cmdbox-foo"` in one of its own Command files (or just
-the main file).
+"github.com/rwxrob/cmdbox-greet"` in one of its own Command files (or
+just the main file).
 
 This modularity allows Commands to freely be exchanged and migrated
 between different projects and repos, or just factored out entirely and
 imported freely by anything. If there are naming conflicts, the
 cmdbox.Rename provides for easy, explicit renames as needed.
 
-The `x.AddHelp()` helper method will add a nice default `h|help` command
-that includes a summary of the legal information.
+The `x.AddHelp()` helper method will add a default `h|help` command that
+includes a summary of the legal information.
 
 ## Motivation
 
@@ -314,15 +314,29 @@ have before choosing to use it.
   completion is not (yet) supported on a particular platform. This
   provides minimal multi-language support possibilities as well.
 
-* At one point the internal `map[string]*Command` index was private to
-  discourage tight coupling between commands and prevent "innovation"
-  that could fork away simplicity as a core tenet of the cmdbox project.
-  But it was decided that this inflexibility came at too great a cost to
-  potential needs of command creators and `cmdbox.Reg()` was added. 
+* At one point the internal CommandMap (`map[string]*Command`) index was
+  private to discourage tight coupling between commands and prevent
+  "innovation" that could fork away simplicity as a core tenet of the
+  cmdbox project. But it was decided that this inflexibility came at too
+  great a cost to potential needs of command creators and `cmdbox.Reg()`
+  was added. 
 
 * Naming of `cmdbox-*` module repos allows for easy discovery. Using the
   conventional `cmd`/`cmd.go` package/file name (which is ignored at
   `init` time) allows consistency for generators and cataloging.
+
+* YAML support was dropped in v0.7.7 after discovering that the YAML
+  project team has chosen to break compatibility between v2 and v3 (a
+  source of frustration for the Kubernetes project). Dropping YAML
+  support allows developer teams to make their own YAML decisions and
+  removes the only external package dependency cmdbox had up to that
+  point. JSON with two space indent will be the standard for marshaling
+  with RawJSON being available for those who wish JSON on a single line.
+  The main JSON parsing functions now return an error as well with
+  MustJSON/MustRawJSON variations that return an empty string if there
+  is any error and log the error to standard error.
+
+*  
 
 ## How Does Completion Work?
 

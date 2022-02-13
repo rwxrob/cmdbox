@@ -241,6 +241,7 @@ func (x *Command) Title() string {
 // empty string is returned instead. Legal() is used by the
 // version builtin command to aggregate all the version information into
 // a single output.
+//
 func (x *Command) Legal() string {
 	switch {
 	case len(x.Copyright) > 0 && len(x.License) > 0 && len(x.Version) > 0:
@@ -249,8 +250,7 @@ func (x *Command) Legal() string {
 	case len(x.Copyright) > 0 && len(x.License) > 0:
 		return x.Name + " " + x.Copyright + "\nLicense " + x.License
 	case len(x.Copyright) > 0 && len(x.Version) > 0:
-		return x.Name + " (" + x.Version + ")" +
-			x.Copyright + "\nLicense " + x.License
+		return x.Name + " (" + x.Version + ") " + x.Copyright
 	case len(x.Copyright) > 0:
 		return x.Name + "\n" + x.Copyright
 	default:

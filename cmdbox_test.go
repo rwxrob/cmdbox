@@ -117,10 +117,14 @@ func ExampleGet() {
 	cmdbox.Get("foo").Print()
 
 	// Output:
-	// name: foo
-	// usage: bar
-	// commands:
-	//   bar: bar
+	// {
+	//     "name": "foo",
+	//     "usage": "bar",
+	//     "commands": {
+	//       "bar": "bar"
+	//     }
+	//   }
+
 }
 
 func ExampleSlice() {
