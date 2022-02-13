@@ -287,18 +287,6 @@ func (x *Command) UpdateUsage() {
 	x.Usage = op + strings.Join(names, "|") + cl
 }
 
-// JSON is shortcut for json.Marshal(x). See util.ToJSON.
-func (x *Command) JSON() string { return util.ToJSON(x) }
-
-// YAML is shortcut for yaml.Marshal(x). See util.ToYAML.
-func (x *Command) YAML() string { return util.ToYAML(x) }
-
-// Print outputs as YAML (nice when testing).
-func (x *Command) Print() { fmt.Println(util.ToYAML(x)) }
-
-// String fullfills fmt.Stringer interface as JSON.
-func (x Command) String() string { return util.ToJSON(x) }
-
 // Add adds the list of Command signatures passed. A command signature
 // consists of one or more more aliases separated by a bar (|) with the
 // final word being the name of the actual Command.  Aliases are
@@ -544,3 +532,22 @@ func (x *Command) Resolve(name string) *Command {
 func (x *Command) Call(name string, args ...string) error {
 	return Call(x, name, args...)
 }
+
+// ---------------------------- marshaling ----------------------------
+
+// RawJSON calls MustRawJSON on the internal map.
+func (m Command) RawJSON() string { return util.MustRawJSON(m) }
+
+// JSON calls util.MustJSON on the internal map. It is often more
+// convenient to simply print/Print instead since the String (from
+// fmt.Stringer interface) does the same thing.
+//
+func (m Command) JSON() string { return util.MustJSON(m) }
+
+// String fulfills fmt.Stringer interface as JSON.
+//
+func (m Command) String() string { return util.MustJSON(m) }
+
+// Print outputs as JSON (nice when testing).
+//
+func (m Command) Print() { fmt.Print(util.MustJSON(m)) }

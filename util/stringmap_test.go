@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	"github.com/rwxrob/cmdbox/util"
-	"gopkg.in/yaml.v3"
 )
 
 func ExampleStringMap() {
@@ -35,22 +34,30 @@ func ExampleStringMap() {
 	fmt.Println(m.Keys())
 	fmt.Println(m.JSON())
 	fmt.Println(m)
-	fmt.Print(m.YAML())
 	m.Print()
 	// Output:
 	// [bar foo]
 	// [b f]
 	// [b bar f foo]
-	// {"b":"bar","bar":"bar","f":"foo","foo":"foo"}
-	// {"b":"bar","bar":"bar","f":"foo","foo":"foo"}
-	// b: bar
-	// bar: bar
-	// f: foo
-	// foo: foo
-	// b: bar
-	// bar: bar
-	// f: foo
-	// foo: foo
+	// {
+	//     "b": "bar",
+	//     "bar": "bar",
+	//     "f": "foo",
+	//     "foo": "foo"
+	//   }
+	// {
+	//     "b": "bar",
+	//     "bar": "bar",
+	//     "f": "foo",
+	//     "foo": "foo"
+	//   }
+	// {
+	//     "b": "bar",
+	//     "bar": "bar",
+	//     "f": "foo",
+	//     "foo": "foo"
+	//   }
+
 }
 
 func ExampleNewStringMap() {
@@ -60,8 +67,10 @@ func ExampleNewStringMap() {
 	m.Print()
 
 	// Output:
-	// {}
-	// foo: bar
+	// {}{
+	//     "foo": "bar"
+	//   }
+
 }
 
 func ExampleToStringMap() {
@@ -72,10 +81,14 @@ func ExampleToStringMap() {
 	n := util.ToStringMap(m)
 	fmt.Printf("%T != %T\n", m, n)
 	n.Print()
+
 	// Output:
 	// map[string]interface {} != *util.StringMap
-	// bar: a bar
-	// foo: a foo
+	// {
+	//     "bar": "a bar",
+	//     "foo": "a foo"
+	//   }
+
 }
 
 func ExampleStringMap_Init() {
@@ -86,8 +99,9 @@ func ExampleStringMap_Init() {
 	m.Print()
 
 	// Output:
-	// foo: bar
-	// {}
+	// {
+	//     "foo": "bar"
+	//   }{}
 }
 
 func ExampleStringMap_Get() {
@@ -124,10 +138,14 @@ func ExampleStringMap_Delete() {
 	m.Print()
 
 	// Output:
-	// bar: "2"
-	// foo: "1"
-	// you: "3"
-	// you: "3"
+	// {
+	//     "bar": "2",
+	//     "foo": "1",
+	//     "you": "3"
+	//   }{
+	//     "you": "3"
+	//   }
+
 }
 
 func ExampleStringMap_Same() {
@@ -174,6 +192,7 @@ func ExampleStringMap_Aliases() {
 
 	// Output:
 	// [b f foo you]
+
 }
 
 func ExampleStringMap_AliasesFor() {
@@ -212,8 +231,10 @@ func ExampleStringMap_AliasesCombined() {
 	m.AliasesCombined("|").Print()
 
 	// Output:
-	// bar: b
-	// foo: f|you
+	// {
+	//     "bar": "b",
+	//     "foo": "f|you"
+	//   }
 
 }
 
@@ -227,8 +248,10 @@ func ExampleStringMap_KeysCombined() {
 	m.KeysCombined("|").Print()
 
 	// Output:
-	// bar: b|bar
-	// foo: f|you|foo
+	// {
+	//     "bar": "b|bar",
+	//     "foo": "f|you|foo"
+	//   }
 
 }
 
@@ -255,9 +278,11 @@ func ExampleStringMap_HasSuffix() {
 	m.HasSuffix("val").Print()
 
 	// Output:
-	// bar: barval
-	// f: fval
-	// foo: fooval
+	// {
+	//     "bar": "barval",
+	//     "f": "fval",
+	//     "foo": "fooval"
+	//   }
 
 }
 
@@ -271,8 +296,10 @@ func ExampleStringMap_HasPrefix() {
 	m.HasPrefix("f").Print()
 
 	// Output:
-	// f: fval
-	// foo: fooval
+	// {
+	//     "f": "fval",
+	//     "foo": "fooval"
+	//   }
 
 }
 func ExampleStringMap_JSON() {
@@ -282,7 +309,11 @@ func ExampleStringMap_JSON() {
 	fmt.Println(m.JSON())
 
 	// Output:
-	// {"bar":"bar","foo":"1"}
+	// {
+	//     "bar": "bar",
+	//     "foo": "1"
+	//   }
+
 }
 
 func ExampleStringMap_String() {
@@ -292,18 +323,10 @@ func ExampleStringMap_String() {
 	fmt.Println(m)
 
 	// Output:
-	// {"bar":"bar","foo":"1"}
-}
-
-func ExampleStringMap_YAML() {
-	m := util.NewStringMap()
-	m.Set("foo", "1")
-	m.Set("bar", "bar")
-	fmt.Println(m.YAML())
-
-	// Output:
-	// bar: bar
-	// foo: "1"
+	// {
+	//     "bar": "bar",
+	//     "foo": "1"
+	//   }
 }
 
 func ExampleStringMap_Print() {
@@ -313,8 +336,11 @@ func ExampleStringMap_Print() {
 	m.Print()
 
 	// Output:
-	// bar: bar
-	// foo: "1"
+	// {
+	//     "bar": "bar",
+	//     "foo": "1"
+	//   }
+
 }
 
 func ExampleStringMap_Rename() {
@@ -325,17 +351,12 @@ func ExampleStringMap_Rename() {
 	m.Print()
 
 	// Output:
-	// foo: val
-	// bar: val
-}
+	// {
+	//     "foo": "val"
+	//   }{
+	//     "bar": "val"
+	//   }
 
-func ExampleStringMap_MarshalYAML() {
-	m := util.NewStringMap()
-	m.Set("foo", "val")
-	byt, _ := yaml.Marshal(m)
-	fmt.Println(string(byt))
-	// Output:
-	// foo: val
 }
 
 func ExampleStringMap_LongestKey() {

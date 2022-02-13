@@ -40,12 +40,6 @@ func ExampleJSON() {
 	fmt.Println(cmdbox.JSON())
 }
 
-func ExampleYAML() {
-	cmdbox.Init() // just for testing
-	cmdbox.Add("foo")
-	fmt.Print(cmdbox.YAML())
-}
-
 func ExampleInit() {
 	cmdbox.Init() // just for testing
 	fmt.Println(cmdbox.Names())

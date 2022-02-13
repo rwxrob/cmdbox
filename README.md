@@ -44,6 +44,10 @@ variable state between synchronous tests.
 
 * Modular, interchangeable, readable subcommands
 
+* Zero dependencies on anything but the Go 1.17+ standard library
+
+* Never any error written to anything but stderr (`log.Printf`)
+
 * Commands can be used standalone or as multicall-enabled subcommands of
   a composite binary (think BusyBox)
 

@@ -97,14 +97,8 @@ var Reg = NewCommandMap()
 //
 func JSON() string { return Reg.JSON() }
 
-// YAML serializes the current internal package register of commands as
-// YAML which can then be used to present documentation of the composite
-// command in different forms. Empty values are always omitted.
-//
-func YAML() string { return Reg.YAML() }
-
-// Print is shortcut for fmt.Println(cmdbox.YAML()) which is mostly only
-// useful during testing.
+// Print simple prints the register as JSON.  It can useful during
+// testing.
 //
 func Print() { Reg.Print() }
 
@@ -581,7 +575,7 @@ func checkSyntax(a []string) {
 // only call when DEBUG true
 func dumpReg() {
 	util.Log("REGISTER (Reg) ------------------------------------")
-	util.Log(Reg.YAML())
+	util.Log(Reg)
 	util.Log("---------------------------------------------------")
 }
 

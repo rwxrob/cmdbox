@@ -323,8 +323,9 @@ func (m StringMap) LongestKey() (string, string) {
 	return longest, longestv
 }
 
-// LongestValue returns the key and value with the longest value. The first
-// longest value will win and Go maps to not promise any specific order.
+// LongestValue returns the key and value with the longest value. The
+// first longest value will win and Go maps to not promise any specific
+// order.
 func (m StringMap) LongestValue() (string, string) {
 	longest := ""
 	longestv := ""
@@ -339,41 +340,26 @@ func (m StringMap) LongestValue() (string, string) {
 
 // ---------------------------- marshaling ----------------------------
 
-// JSON is shortcut for json.Marshal(m). See ToJSON.
-func (m StringMap) JSON() string { return ToJSON(m.M) }
+// RawJSON calls MustRawJSON on the internal map.
+func (m StringMap) RawJSON() string { return MustRawJSON(m.M) }
 
-// String fullfills fmt.Stringer interface as JSON.
-func (m StringMap) String() string { return ToJSON(m.M) }
+// JSON calls MustJSON on the internal map. It is often more convenient
+// to simply print/Print instead since the String (from fmt.Stringer
+// interface) does the same thing.
+func (m StringMap) JSON() string { return MustJSON(m.M) }
 
-// YAML is shortcut for MarshalYAML as string.
-func (m StringMap) YAML() string { return ToYAML(m.M) }
+// String fulfills fmt.Stringer interface as JSON.
+func (m StringMap) String() string { return MustJSON(m.M) }
 
-// Print outputs as YAML (nice when testing).
-func (m StringMap) Print() { fmt.Print(ToYAML(m.M)) }
+// Print outputs as JSON (nice when testing).
+func (m StringMap) Print() { fmt.Print(MustJSON(m.M)) }
 
 // MarshalJSON implements the json.Marshaler interface using the
 // internal (M) map.
-func (m StringMap) MarshalJSON() ([]byte, error) { return json.Marshal(m.M) }
+func (m StringMap) MarshalJSON() ([]byte, error) { return json.MarshalIndent(m.M, "  ", "  ") }
 
 // UnmarshalJSON implements the json.Unmarshaler interface using the
 // internal (M) map.
 func (m *StringMap) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &m.M)
-}
-
-// MarshalYAML implements the yaml.Marshaler interface using the internal
-// (M) map.
-func (m StringMap) MarshalYAML() (interface{}, error) { return m.M, nil }
-
-// TODO
-// func (m *StringMap) UnmarshalYAML(node *yaml.Node) error {
-// return yaml.Unmarshal(node, &m.M)
-// }
-
-// Load opens and buffers the file at path and unmarshals it with
-// yaml.Unmarshal (which includes JSON) in a way that is safe for
-// concurrency.
-func (m *StringMap) Load(path string) error {
-	// TODO lock, load, and unmarshal
-	return fmt.Errorf("load not yet implemented")
 }

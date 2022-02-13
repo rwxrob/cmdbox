@@ -157,14 +157,17 @@ func (m CommandMap) Slice(names ...string) []*Command {
 
 // ---------------------------- marshaling ----------------------------
 
-// JSON is shortcut for json.Marshal(m). See ToJSON.
-func (m CommandMap) JSON() string { return util.ToJSON(m.M) }
+// RawJSON calls MustRawJSON on the internal map.
+func (m CommandMap) RawJSON() string { return util.MustRawJSON(m.M) }
 
-// String fullfills fmt.Stringer interface as JSON.
-func (m CommandMap) String() string { return util.ToJSON(m.M) }
+// JSON calls util.MustJSON on the internal map. It is often more
+// convenient to simply print/Print instead since the String (from
+// fmt.Stringer interface) does the same thing.
+//
+func (m CommandMap) JSON() string { return util.MustJSON(m.M) }
 
-// YAML is shortcut for yaml.Marshal(m). See ToYAML.
-func (m CommandMap) YAML() string { return util.ToYAML(m.M) }
+// String fulfills fmt.Stringer interface as JSON.
+func (m CommandMap) String() string { return util.MustJSON(m.M) }
 
-// Print outputs as YAML (nice when testing).
-func (m CommandMap) Print() { fmt.Print(util.ToYAML(m.M)) }
+// Print outputs as JSON (nice when testing).
+func (m CommandMap) Print() { fmt.Print(util.MustJSON(m.M)) }

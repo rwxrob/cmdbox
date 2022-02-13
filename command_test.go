@@ -89,21 +89,6 @@ func ExampleCommand_JSON() {
 	// {"name":"foo","usage":"[help]","commands":{"help":"help"},"default":"help"}
 }
 
-func ExampleCommand_YAML() {
-	cmdbox.Init() // just for testing
-	x := cmdbox.NewCommand("foo")
-	fmt.Print(x.YAML())
-	x.Print()
-	// Output:
-	// name: foo
-	// commands: {}
-	// default: help
-	// name: foo
-	// commands: {}
-	// default: help
-
-}
-
 func ExampleCommand_Title() {
 	cmdbox.Init() // just for testing
 	x := cmdbox.NewCommand("foo")
