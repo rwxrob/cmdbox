@@ -174,8 +174,8 @@ type Command struct {
 	Copyright   string          `json:"copyright,omitempty" yaml:",omitempty"`
 	License     string          `json:"license,omitempty" yaml:",omitempty"`
 	Description string          `json:"description,omitempty" yaml:",omitempty"`
-	Site        string          `json:"git,omitempty" yaml:",omitempty"`
-	Source      string          `json:"git,omitempty" yaml:",omitempty"`
+	Site        string          `json:"site,omitempty" yaml:",omitempty"`
+	Source      string          `json:"source,omitempty" yaml:",omitempty"`
 	Issues      string          `json:"issues,omitempty" yaml:",omitempty"`
 	Commands    *util.StringMap `json:"commands,omitempty" yaml:",omitempty"`
 	Params      []string        `json:"params,omitempty" yaml:",omitempty"`
@@ -262,7 +262,7 @@ func (x *Command) Legal() string {
 // is no x.Method found. Such commands always require
 // a explicit subcommand or will produce a usage error.
 //
-func (x Command) CommandRequired() bool {
+func (x *Command) CommandRequired() bool {
 	return x.Default == "" && x.Method == nil
 }
 
@@ -288,13 +288,13 @@ func (x *Command) UpdateUsage() {
 }
 
 // JSON is shortcut for json.Marshal(x). See util.ToJSON.
-func (x Command) JSON() string { return util.ToJSON(x) }
+func (x *Command) JSON() string { return util.ToJSON(x) }
 
 // YAML is shortcut for yaml.Marshal(x). See util.ToYAML.
-func (x Command) YAML() string { return util.ToYAML(x) }
+func (x *Command) YAML() string { return util.ToYAML(x) }
 
 // Print outputs as YAML (nice when testing).
-func (x Command) Print() { fmt.Println(util.ToYAML(x)) }
+func (x *Command) Print() { fmt.Println(util.ToYAML(x)) }
 
 // String fullfills fmt.Stringer interface as JSON.
 func (x Command) String() string { return util.ToJSON(x) }
@@ -379,7 +379,7 @@ func (x *Command) UnexpectedArg(a string) error {
 // a file or to an interactive terminal. For a more structured form of
 // the same information see YAML, JSON, Print, and PrintHelp.
 //
-func (x Command) Help() string {
+func (x *Command) Help() string {
 	var buf string
 
 	buf += util.Emph("**NAME**", 0, -1) + "\n       " + x.Title() + "\n\n"
@@ -424,14 +424,30 @@ func (x Command) Help() string {
 }
 
 // PrintHelp simply prints what Help returns.
-func (x Command) PrintHelp() { fmt.Print(x.Help()) }
+func (x *Command) PrintHelp() { fmt.Print(x.Help()) }
 
 // AddHelp adds a basic h|help subcommand sets x.Default to it if unset.
 // As of v0.7.7 help is no longer automatically added to allows the
 // lightest binaries possible. See PrintHelp and Help as well.
 //
-func (x Command) AddHelp() {
+func (x *Command) AddHelp() {
 	x.Add("h|help")
+
+	if DEBUG {
+		util.Log("ADDING HELP: " + x.Name)
+	}
+
+	if x.Default == "" {
+		x.Default = "help"
+		if DEBUG {
+			util.Log("CHANGING " + x.Name + " DEFAULT TO " + x.Default)
+		}
+	} else {
+		if DEBUG {
+			util.Log("KEEPING " + x.Name + "DEFAULT TO " + x.Default)
+		}
+	}
+
 	h := Add(x.Name + " help")
 	h.Usage = `[COMMAND]`
 	h.Summary = `display command help information`
@@ -440,9 +456,6 @@ func (x Command) AddHelp() {
 	h.Method = func(args ...string) error {
 		x.PrintHelp()
 		return nil
-	}
-	if x.Default == "" {
-		x.Default = "help"
 	}
 	x.UpdateUsage()
 }
@@ -481,7 +494,7 @@ func (x *Command) ResolveDelegate(args []string) *Command {
 // signatures as values suitable for printing usage information. Hidden
 // commands are omitted.
 //
-func (x Command) Sigs() *util.StringMap {
+func (x *Command) Sigs() *util.StringMap {
 	return x.Commands.KeysCombined("|")
 }
 
@@ -489,7 +502,7 @@ func (x Command) Sigs() *util.StringMap {
 // indented and with a maximum title signature length for justification.
 // Hidden commands are not included.
 //
-func (x Command) Titles(indent, max int) string {
+func (x *Command) Titles(indent, max int) string {
 	buf := ""
 	sigs := x.Sigs()
 	_, lval := sigs.LongestValue()
@@ -519,7 +532,7 @@ func (x Command) Titles(indent, max int) string {
 // important because at init time when Commands are Added to the
 // register their subcommands may not yet have been registered. Resolve
 // allows this lookup to happen reliably later in runtime.
-func (x Command) Resolve(name string) *Command {
+func (x *Command) Resolve(name string) *Command {
 	n := Reg.Get(x.Name + " " + name)
 	if n == nil {
 		n = Reg.Get(name)

@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/rwxrob/cmdbox/comp"
+	"github.com/rwxrob/cmdbox/util"
 )
 
 const (
@@ -37,6 +38,7 @@ const (
 	m_missing_arg    = "missing argument for %v"
 	m_unexpected_arg = "unexpected argument: %v"
 	m_missing_caller = "requires caller"
+	m_unresolvable   = "unsolvable command: %v"
 )
 
 // Main is always set to the main command that was used for Execute.
@@ -49,6 +51,18 @@ var Main *Command
 // caller in order to trap panics and use them for testing, etc.
 //
 var DoNotExit bool
+
+// DEBUG is set when os.Getenv("CMDBOX_DEBUG") is set to anything.
+// Produces verbose debugging logs to stderr to help cmdbox users
+// develop robust tools.
+//
+var DEBUG bool
+
+func init() {
+	if os.Getenv("CMDBOX_DEBUG") != "" {
+		DEBUG = true
+	}
+}
 
 // ExitOff sets DoNotExit to false.
 //
@@ -271,7 +285,6 @@ func Slice(names ...string) []*Command { return Reg.Slice(names...) }
 // key names to refer to commands that have an actual x.Name that
 // differs from the key this is discouraged, which is why Add and Rename
 // should generally be used instead. Also see Add and Get.
-//
 func Set(name string, x *Command) { Reg.Set(name, x) }
 
 // Delete deletes one or more commands from the internal register.
@@ -401,6 +414,12 @@ var CallerRequired = func() error {
 	return fmt.Errorf(m_missing_caller)
 }
 
+// Unresolvable returns an error stating the command method could not be
+// found in the internal registry.
+var Unresolvable = func(msg string) error {
+	return fmt.Errorf(m_unresolvable, msg)
+}
+
 // --------------------- resolve / call / execute ---------------------
 
 // Resolve looks up a Command from the internal Reg register based on
@@ -505,12 +524,25 @@ func Resolve(caller *Command, name string, args []string) (Method,
 //
 func Call(caller *Command, name string, args ...string) error {
 	defer TrapPanic()
+
+	if DEBUG {
+		out := fmt.Sprintf("CALLING: %v(%q)", name, args)
+		if caller != nil {
+			out += " from " + caller.Name
+		}
+		util.Log(out)
+	}
+
 	if name == "" {
 		return MissingArg("name")
 	}
+
 	method, args := Resolve(caller, name, args)
 	if method == nil {
-		return Unimplemented(name)
+		if caller != nil {
+			return caller.UsageError()
+		}
+		return Unresolvable(fmt.Sprintf("%v(%q)", name, args))
 	}
 	return method(args...)
 }
@@ -527,6 +559,31 @@ func Call(caller *Command, name string, args ...string) error {
 func ExecutedAs() string { return executedAs }
 
 var executedAs = strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
+
+// only call when DEBUG true
+func checkSyntax(a []string) {
+	util.Log("ARGUMENTS -----------------------------------------")
+	util.Log(a)
+	util.Log("NAMES ---------------------------------------------")
+	util.Log(Names())
+	util.Log("DUPLICATES ----------------------------------------")
+	util.Log(Dups())
+	//util.Log("MISSING OWNER -------------------------------------")
+	// TODO iterate through all commands in Reg and check that each
+	// is in a command list of one of the other commands.
+	//util.Log("MISSING METHOD ------------------------------------")
+	// TODO iterate through all the commands of each entry in Reg
+	// and attempt to resolve a method for it. List only those that
+	// fail to resolve.
+	dumpReg()
+}
+
+// only call when DEBUG true
+func dumpReg() {
+	util.Log("REGISTER (Reg) ------------------------------------")
+	util.Log(Reg.YAML())
+	util.Log("---------------------------------------------------")
+}
 
 // Execute is the main entrypoint into a CmdBox composite command and is
 // always called from a main() function. In fact, most won't need the
@@ -545,25 +602,58 @@ var executedAs = strings.TrimSuffix(filepath.Base(os.Args[0]), ".exe")
 //
 func Execute(a ...string) {
 	defer TrapPanic()
+
+	if DEBUG {
+		checkSyntax(a)
+	}
+
+	// infer the name
 	var name string
 	if len(a) > 0 {
 		name = a[0]
 	} else {
 		name = executedAs
 	}
+
+	if DEBUG {
+		util.Log("INFERRED NAME: " + name)
+	}
+
+	// check name and set as Main
 	x := Reg.Get(name)
 	if x == nil {
+		if DEBUG {
+			util.Log("WARNING: " + name + " not found in registry")
+		}
 		ExitUnimplemented(name)
 	}
+
 	Main = x
+
 	x.UpdateUsage()
+
+	if DEBUG {
+		dumpReg()
+		if x.CommandRequired() {
+			util.Log("WARNING: no default subcommand found for " + name)
+		}
+	}
+
+	// detect completion context
 	if comp.Yes() {
 		x.Complete()
 		Exit()
 	}
-	err := Call(x, name, os.Args[1:]...)
+
+	// otherwise, call it
+	err := x.Call(name, os.Args[1:]...)
 	if err != nil {
+		if DEBUG {
+			out := fmt.Sprintf("FATAL: %v(%q)", name, os.Args[1:])
+			util.Log([]interface{}{out, err})
+		}
 		ExitError(err)
 	}
+
 	Exit()
 }

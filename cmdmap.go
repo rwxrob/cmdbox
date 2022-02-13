@@ -49,8 +49,8 @@ func NewCommandMap() *CommandMap {
 // Init initializes (or re-initialized) the CommandMap deleting all its
 // values (without changing its reference).
 func (m *CommandMap) Init() {
-	defer m.Unlock()
 	m.Lock()
+	defer m.Unlock()
 	if m.M == nil {
 		m.M = make(map[string]*Command)
 		return
@@ -63,8 +63,8 @@ func (m *CommandMap) Init() {
 // Get returns a Command pointer by key name safe for concurrency.
 // Returns nil if not found.
 func (m *CommandMap) Get(key string) *Command {
-	defer m.Unlock()
 	m.Lock()
+	defer m.Unlock()
 	if v, has := m.M[key]; has {
 		return v
 	}
@@ -112,8 +112,8 @@ func (m CommandMap) Rename(from, to string) {
 
 // Names returns a sorted list of all Command names.
 func (m CommandMap) Names() []string {
-	defer m.Unlock()
 	m.Lock()
+	defer m.Unlock()
 	keys := make([]string, len(m.M))
 	var i int
 	for k, _ := range m.M {

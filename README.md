@@ -23,6 +23,18 @@ multicall binary.
 
 Normally you would simply `import "github.com/rwxrob/cmdbox"`.
 
+## `cmdbox.DEBUG = true`/`CMDBOX_DEBUG=1` Mode
+
+Developers can set the `CMDBOX_DEBUG` environment variable to anything
+or the `cmdbox.DEBUG` package boolean to `true` to activate a verbose
+log written to standard error output designed to make cmdbox command
+modules easier to develop and debug. This is particularly important
+since traditional Go unit test methods are somewhat more difficult when
+dealing with things that happen during `init()` time.
+
+Also consider using `cmdbox.Init()` during testing to reset the package
+variable state between synchronous tests.
+
 ## Advantages
 
 * Build the command-line interface to your application completely
