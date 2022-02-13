@@ -23,7 +23,8 @@ import (
 )
 
 func ExampleReg() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 
 	// by default the internal registry is empty but initialized
 
@@ -34,18 +35,21 @@ func ExampleReg() {
 }
 
 func ExampleJSON() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	fmt.Println(cmdbox.JSON())
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.JSON())
 }
 
 func ExampleInit() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	fmt.Println(cmdbox.Names())
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.Names())
-	cmdbox.Init()
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	fmt.Println(cmdbox.Names())
 
 	// Output:
@@ -56,7 +60,8 @@ func ExampleInit() {
 }
 
 func ExampleAdd_simple() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.Names())
 
@@ -65,7 +70,8 @@ func ExampleAdd_simple() {
 }
 
 func ExampleAdd_with_Subcommands() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	cmdbox.Add("foo")
 	cmdbox.Add("foo bar")
 	fmt.Println(cmdbox.Names())
@@ -76,7 +82,8 @@ func ExampleAdd_with_Subcommands() {
 }
 
 func ExampleAdd_with_Duplicates() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	cmdbox.Add("foo")
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.Dups())
@@ -89,7 +96,8 @@ func ExampleAdd_with_Duplicates() {
 }
 
 func ExampleNames() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	cmdbox.Add("foo")
 	cmdbox.Add("bar")
 	fmt.Println(cmdbox.Names())
@@ -100,7 +108,8 @@ func ExampleNames() {
 }
 
 func ExampleRename() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	cmdbox.Add("foo")
 	cmdbox.Add("foo")
 	cmdbox.Rename("foo_", "bar")
@@ -112,7 +121,8 @@ func ExampleRename() {
 }
 
 func ExampleGet() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	cmdbox.Add("foo", "bar")
 	cmdbox.Get("foo").Print()
 
@@ -128,7 +138,8 @@ func ExampleGet() {
 }
 
 func ExampleSlice() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	cmdbox.Add("foo")
 	cmdbox.Add("foo help")
 	cmdbox.Add("bar")
@@ -143,7 +154,8 @@ func ExampleSlice() {
 }
 
 func ExampleSet() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	foo := cmdbox.NewCommand("foo")
 	cmdbox.Set("foo", foo)
 	bar := cmdbox.NewCommand("bar")
@@ -157,7 +169,8 @@ func ExampleSet() {
 }
 
 func ExampleDelete() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	cmdbox.Add("foo")
 	cmdbox.Add("bar")
 	fmt.Println(cmdbox.Names())
@@ -171,8 +184,8 @@ func ExampleDelete() {
 }
 
 func ExampleResolve() {
-	cmdbox.Init() // just for testing
-	defer cmdbox.TrapPanicNoExit()
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 
 	gr := cmdbox.Add("greet", "fr|french", "ru|russian")
 	gr.Summary = "main greet composite, no method"
@@ -221,7 +234,8 @@ func ExampleResolve() {
 }
 
 func ExampleCall_nil_Caller() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 
 	x := cmdbox.Add("greet")
 
@@ -238,7 +252,8 @@ func ExampleCall_nil_Caller() {
 }
 
 func ExampleCall_caller_Subcommand() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 
 	caller := cmdbox.Add("foo", "h|help")
 
@@ -261,7 +276,8 @@ func ExampleCall_caller_Subcommand() {
 }
 
 func ExampleExecute_no_Method() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff() 
 	cmdbox.ExitOff()
 	defer cmdbox.ExitOn()
 

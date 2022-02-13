@@ -6,7 +6,7 @@ import (
 )
 
 func ExampleComplete_params() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn();defer cmdbox.TestOff() 
 
 	x := cmdbox.NewCommand("foo")
 	x.Params = []string{"-1", "25m", "0.2", "FULL"}

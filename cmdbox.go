@@ -22,6 +22,7 @@ package cmdbox
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -71,6 +72,29 @@ func ExitOff() { DoNotExit = true }
 // ExitOn sets DoNotExit to true.
 //
 func ExitOn() { DoNotExit = false }
+
+// TestOn is designed for calling as the first line in unit testing that
+// deals with the cmdbox package scope. ExitOff and Init and TrapPanic
+// are all called and log.SetOutput(os.Stdout) is called so that tests
+// can capture it. Normally, TestOn is immediately followed by
+// a deferred TestOff.
+//
+func TestOn() {
+	TrapPanic()
+	ExitOff()
+	Init()
+	log.SetFlags(0)
+	log.SetOutput(os.Stdout)
+}
+
+// TestOff is usually called as a defer immediately after TestOn which
+// calls ExitOn and sets the log package output back to os.Stderr.
+//
+func TestOff() {
+	ExitOn()
+	//log.SetFlags(log.Ldate | log.Ltime)
+	log.SetOutput(os.Stderr)
+}
 
 // Color sets the default output mode for interactive terminals. Set to
 // false to force uncolored output for testing, etc. Non-interactive
@@ -194,7 +218,7 @@ func Init() {
 // type usually remains unnamed.
 //
 //    x.Method = func(args ...string) error {
-//      fmt.Println("would do something")
+//      log.Println("would do something")
 //      return nil
 //    }
 //
@@ -302,13 +326,13 @@ func ExitError(err ...interface{}) {
 	switch e := err[0].(type) {
 	case string:
 		if len(e) > 1 {
-			fmt.Printf(e+"\n", err[1:])
+			log.Printf(e+"\n", err[1:])
 		}
-		fmt.Println(e)
+		log.Println(e)
 	case error:
 		out := fmt.Sprintf("%v", e)
 		if len(out) > 0 {
-			fmt.Println(out)
+			log.Println(out)
 		}
 	}
 	if !DoNotExit {
@@ -333,15 +357,6 @@ func ExitUnimplemented(a string) { ExitError(Unimplemented(a)) }
 var TrapPanic = func() {
 	if r := recover(); r != nil {
 		ExitError(r)
-	}
-}
-
-// TrapPanicNoExit is same as TrapPanic without exiting. It prints the
-// panic instead (useful for testing).
-//
-var TrapPanicNoExit = func() {
-	if r := recover(); r != nil {
-		fmt.Println(r)
 	}
 }
 

@@ -336,7 +336,8 @@ have before choosing to use it.
   MustJSON/MustRawJSON variations that return an empty string if there
   is any error and log the error to standard error.
 
-*  
+* All errors have been moved to output to standard error instead of
+  stdout so they never conflict with using cmdbox apps as filters.
 
 ## How Does Completion Work?
 

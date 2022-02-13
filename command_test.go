@@ -24,7 +24,8 @@ import (
 )
 
 func ExampleNewCommand_simple() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo")
 	x.Print()
 	// Output:
@@ -36,7 +37,8 @@ func ExampleNewCommand_simple() {
 }
 
 func ExampleNewCommand_subcommand() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo bar")
 	x.Print()
 	// Output:
@@ -48,9 +50,9 @@ func ExampleNewCommand_subcommand() {
 }
 
 func ExampleNewCommand_invalid() {
-	cmdbox.Init()
-	cmdbox.ExitOff()
-	defer cmdbox.ExitOn()
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
+
 	cmdbox.NewCommand("Foo") // see valid/name.go for more
 
 	// Output:
@@ -70,7 +72,8 @@ func ExampleNewCommand_dup() {
 }
 
 func ExampleNewCommand_commands() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo", "h|help", "l|ls|list")
 	x.Print()
 
@@ -90,7 +93,8 @@ func ExampleNewCommand_commands() {
 }
 
 func ExampleCommand_JSON() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo", "some")
 
 	fmt.Println(x.RawJSON())
@@ -125,7 +129,8 @@ func ExampleCommand_JSON() {
 }
 
 func ExampleCommand_Title() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo")
 	fmt.Println(x.Title())
 	x.Summary = "just a foo"
@@ -137,7 +142,8 @@ func ExampleCommand_Title() {
 }
 
 func ExampleCommand_Legal() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo")
 	fmt.Println(x.Legal())
 	x.Version = "v0.0.1"
@@ -155,7 +161,8 @@ func ExampleCommand_Legal() {
 }
 
 func ExampleCommand_Add() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo")
 	x.Add("l|ls|list", "h|help", "version")
 	x.Print()
@@ -176,7 +183,8 @@ func ExampleCommand_Add() {
 }
 
 func ExampleCommand_Complete_commands() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo")
 	x.Add("l|ls|list")
 	comp.This = "l"
@@ -187,7 +195,8 @@ func ExampleCommand_Complete_commands() {
 }
 
 func ExampleCommand_Complete_compFunc() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo")
 	x.CompFunc = func(x *cmdbox.Command) []string {
 		// deliberatly always return the same thing
@@ -206,7 +215,8 @@ func ExampleCommand_Complete_compFunc() {
 }
 
 func ExampleCommand_Unimplemented() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.NewCommand("foo")
 	fmt.Println(x.Unimplemented("help"))
 	// Output:
@@ -214,7 +224,8 @@ func ExampleCommand_Unimplemented() {
 }
 
 func ExampleCommand_UsageError() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 
 	x := cmdbox.NewCommand("foo")
 	x.Usage = "unique usage here"
@@ -226,7 +237,8 @@ func ExampleCommand_UsageError() {
 }
 
 func ExampleCommand_Sigs() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.Add("foo", "h|help", "version", "bar")
 	x.Sigs().Print()
 
@@ -240,7 +252,8 @@ func ExampleCommand_Sigs() {
 }
 
 func ExampleCommand_Titles() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 	x := cmdbox.Add("foo", "bar", "other", "p|print", "c|comp|complete")
 
 	b := cmdbox.Add("bar")
@@ -276,7 +289,8 @@ func ExampleCommand_Titles() {
 }
 
 func ExampleCommand_Resolve() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 
 	x := cmdbox.Add("foo", "bar")
 
@@ -294,7 +308,8 @@ func ExampleCommand_Resolve() {
 }
 
 func ExampleCommand_Resolve_bork() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 
 	x := cmdbox.Add("foo me", "bork")
 
@@ -306,7 +321,8 @@ func ExampleCommand_Resolve_bork() {
 }
 
 func ExampleCommand_Resolve_subcommand() {
-	cmdbox.Init() // just for testing
+	cmdbox.TestOn()
+	defer cmdbox.TestOff()
 
 	x := cmdbox.Add("foo me", "bar")
 
