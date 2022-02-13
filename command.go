@@ -205,15 +205,13 @@ type Method func(args ...string) error
 func NewCommand(name string, a ...string) *Command {
 	x := new(Command)
 
-	// panic unless valid command name
+	// exit if invalid command and not dup
 	if !valid.Name(name) && name[len(name)-1] != '_' {
 		ExitSyntaxError(fmt.Sprintf(m_invalid_name, name))
 	}
 
-	// initialize command with internal h|help and version
 	x.Name = name
 	x.Commands = util.NewStringMap()
-	x.Default = "help"
 
 	// add any subcommands
 	if len(a) > 0 {
@@ -260,13 +258,33 @@ func (x *Command) Legal() string {
 	}
 }
 
+// CommandRequired returns true if x.Default is not set and there also
+// is no x.Method found. Such commands always require
+// a explicit subcommand or will produce a usage error.
+//
+func (x Command) CommandRequired() bool {
+	return x.Default == "" && x.Method == nil
+}
+
 // UpdateUsage will set x.Usage to the default, which is all of the
-// Commands joined with bar (|) and wrapped in brackets ([]).
+// Commands joined with bar (|) and wrapped in either brackets ([]) or
+// parenthesis (()) depending on whether a x.Default has been set or the
+// command has it's own Method (effectively the default).
+//
 func (x *Command) UpdateUsage() {
 	names := x.Commands.Keys()
-	if len(names) > 0 {
-		x.Usage = "[" + strings.Join(names, "|") + "]"
+	op := "["
+	cl := "]"
+	if x.CommandRequired() {
+		if len(names) > 1 {
+			op = "("
+			cl = ")"
+		} else {
+			op = ""
+			cl = ""
+		}
 	}
+	x.Usage = op + strings.Join(names, "|") + cl
 }
 
 // JSON is shortcut for json.Marshal(x). See util.ToJSON.
@@ -355,7 +373,7 @@ func (x *Command) UnexpectedArg(a string) error {
 	return UnexpectedArg(a)
 }
 
-// ------------------------------- help -------------------------------
+// ------------------------------ help -------------------------------
 
 // Help returns a formatted string suitable for printing either to
 // a file or to an interactive terminal. For a more structured form of
@@ -408,6 +426,10 @@ func (x Command) Help() string {
 // PrintHelp simply prints what Help returns.
 func (x Command) PrintHelp() { fmt.Print(x.Help()) }
 
+// AddHelp adds a basic h|help subcommand sets x.Default to it if unset.
+// As of v0.7.7 help is no longer automatically added to allows the
+// lightest binaries possible. See PrintHelp and Help as well.
+//
 func (x Command) AddHelp() {
 	x.Add("h|help")
 	h := Add(x.Name + " help")
@@ -419,6 +441,10 @@ func (x Command) AddHelp() {
 		x.PrintHelp()
 		return nil
 	}
+	if x.Default == "" {
+		x.Default = "help"
+	}
+	x.UpdateUsage()
 }
 
 // ResolveDelegate returns a Command pointer looked up from the internal
