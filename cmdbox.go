@@ -66,11 +66,9 @@ func init() {
 }
 
 // ExitOff sets DoNotExit to false.
-//
 func ExitOff() { DoNotExit = true }
 
 // ExitOn sets DoNotExit to true.
-//
 func ExitOn() { DoNotExit = false }
 
 // TestOn is designed for calling as the first line in unit testing that
@@ -267,12 +265,10 @@ func Add(name string, a ...string) *Command {
 
 // Names returns a sorted list of all Command names in the internal
 // register.
-//
 func Names() []string { return Reg.Names() }
 
 // Dups returns key strings of duplicates (which can then be easily
 // renamed). Keys are sorted in lexicographic order. See Rename.
-//
 func Dups() []string { return Reg.Dups() }
 
 // Rename renames a Command in the Reg register by adding the
@@ -379,7 +375,6 @@ var UsageError = func(x *Command) error {
 }
 
 // BadType returns an error containing the bad type attempted.
-//
 var BadType = func(v interface{}) error {
 	return fmt.Errorf(m_bad_type, v)
 }
@@ -398,14 +393,12 @@ var Harmless = func(msg ...string) error {
 
 // MissingArg returns an error stating that the name of the parameter
 // for which no argument was found.
-//
 var MissingArg = func(name string) error {
 	return fmt.Errorf(m_missing_arg, name)
 }
 
 // UnexpectedArg returns an error stating that the argument passed was
 // unexpected in the given context.
-//
 var UnexpectedArg = func(name string) error {
 	return fmt.Errorf(m_unexpected_arg, name)
 }

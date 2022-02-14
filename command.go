@@ -27,28 +27,7 @@ import (
 
 // Command contains a Method or delegates to  one or more other Commands
 // by name. Typically a Command is created within an init() function by
-// calling cmdbox.New:
-//
-//     import "github.com/rwxrob/cmdbox"
-//
-//     func init() {
-//         // use x by convention
-//         x := cmdbox.New("greet","hi","hello")
-//         x.Method = func(args []string) error {
-//             if len(args) == 0 {
-//                 args = append(args, "hi")
-//             }
-//             switch args[0] {
-//             case "hello":
-//                 fmt.Println("*Hello!*")
-//             case "hi":
-//                 fmt.Println("*Hello!*")
-//             default:
-//                 return x.UsageError()
-//             }
-//             return nil
-//         }
-//     }
+// calling cmdbox.Add (see testable examples).
 //
 // Providing the method, documentation, and tab completion rules in
 // a single file providing a tight, clean view of the Command that is

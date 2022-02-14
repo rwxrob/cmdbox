@@ -24,7 +24,7 @@ import (
 
 func ExampleReg() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 
 	// by default the internal registry is empty but initialized
 
@@ -36,15 +36,26 @@ func ExampleReg() {
 
 func ExampleJSON() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
+
 	fmt.Println(cmdbox.JSON())
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.JSON())
+
+	// Output:
+	// {}
+	// {
+	//     "foo": {
+	//       "name": "foo",
+	//       "commands": {}
+	//     }
+	//   }
+
 }
 
 func ExampleInit() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	fmt.Println(cmdbox.Names())
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.Names())
@@ -61,7 +72,7 @@ func ExampleInit() {
 
 func ExampleAdd_simple() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.Names())
 
@@ -71,7 +82,7 @@ func ExampleAdd_simple() {
 
 func ExampleAdd_with_Subcommands() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	cmdbox.Add("foo")
 	cmdbox.Add("foo bar")
 	fmt.Println(cmdbox.Names())
@@ -83,7 +94,7 @@ func ExampleAdd_with_Subcommands() {
 
 func ExampleAdd_with_Duplicates() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	cmdbox.Add("foo")
 	cmdbox.Add("foo")
 	fmt.Println(cmdbox.Dups())
@@ -97,7 +108,7 @@ func ExampleAdd_with_Duplicates() {
 
 func ExampleNames() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	cmdbox.Add("foo")
 	cmdbox.Add("bar")
 	fmt.Println(cmdbox.Names())
@@ -109,7 +120,7 @@ func ExampleNames() {
 
 func ExampleRename() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	cmdbox.Add("foo")
 	cmdbox.Add("foo")
 	cmdbox.Rename("foo_", "bar")
@@ -122,7 +133,7 @@ func ExampleRename() {
 
 func ExampleGet() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	cmdbox.Add("foo", "bar")
 	cmdbox.Get("foo").Print()
 
@@ -139,7 +150,7 @@ func ExampleGet() {
 
 func ExampleSlice() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	cmdbox.Add("foo")
 	cmdbox.Add("foo help")
 	cmdbox.Add("bar")
@@ -155,7 +166,7 @@ func ExampleSlice() {
 
 func ExampleSet() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	foo := cmdbox.NewCommand("foo")
 	cmdbox.Set("foo", foo)
 	bar := cmdbox.NewCommand("bar")
@@ -170,7 +181,7 @@ func ExampleSet() {
 
 func ExampleDelete() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	cmdbox.Add("foo")
 	cmdbox.Add("bar")
 	fmt.Println(cmdbox.Names())
@@ -235,7 +246,7 @@ func ExampleResolve() {
 
 func ExampleCall_nil_Caller() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 
 	x := cmdbox.Add("greet")
 
@@ -253,7 +264,7 @@ func ExampleCall_nil_Caller() {
 
 func ExampleCall_caller_Subcommand() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 
 	caller := cmdbox.Add("foo", "h|help")
 
@@ -277,7 +288,7 @@ func ExampleCall_caller_Subcommand() {
 
 func ExampleExecute_no_Method() {
 	cmdbox.TestOn()
-	defer cmdbox.TestOff() 
+	defer cmdbox.TestOff()
 	cmdbox.ExitOff()
 	defer cmdbox.ExitOn()
 
