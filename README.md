@@ -1,5 +1,7 @@
 # 🍱 Go cmdbox Composite Commander
 
+***⚠This project is being superceded by [Bonzai](https://github.com/rwxrob/bonzai)***
+
 [![GoDoc](https://godoc.org/github.com/rwxrob/cmdbox?status.svg)](https://godoc.org/github.com/rwxrob/cmdbox)
 [![License](https://img.shields.io/badge/license-Apache2-brightgreen.svg)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rwxrob/cmdbox)](https://goreportcard.com/report/github.com/rwxrob/cmdbox)
