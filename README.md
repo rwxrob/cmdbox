@@ -1,10 +1,6 @@
 # 🍱 Go cmdbox Composite Commander
 
-***⚠This project is being superceded by [Bonzai™](https://github.com/rwxrob/bonzai) which has support for "runtimes" and "completers" other than bash shell.⚠***
-
-[![GoDoc](https://godoc.org/github.com/rwxrob/cmdbox?status.svg)](https://godoc.org/github.com/rwxrob/cmdbox)
-[![License](https://img.shields.io/badge/license-Apache2-brightgreen.svg)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/rwxrob/cmdbox)](https://goreportcard.com/report/github.com/rwxrob/cmdbox)
+***💥 DEPRECATED: This project long been superseded by [bonzai](https://github.com/rwxrob/bonzai). This repo is only kept for historical reference.***
 
 *A composite commander for modern human-computer text interactions.*
 
